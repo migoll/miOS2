@@ -92,6 +92,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
       action: () => onArrangeIcons?.(),
     },
     {
+      id: 'tidy-up',
+      label: 'Tidy Up',
+      icon: '🧹',
+      action: () => onArrangeIcons?.(),
+    },
+    {
       id: 'separator-2',
       label: '',
       action: () => {},

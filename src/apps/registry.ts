@@ -1,20 +1,20 @@
 import React from 'react';
 import type { AppMetadata } from '../types/index.js';
 
-// Lazy load all apps
-const PlaceholderApp = React.lazy(() => import('./PlaceholderApp'));
-const SettingsApp = React.lazy(() => import('./SettingsApp'));
-const FinderApp = React.lazy(() => import('./FinderApp'));
-const TextEditApp = React.lazy(() => import('./TextEditApp'));
-const MacPaintApp = React.lazy(() => import('./MacPaintApp'));
-const VideosApp = React.lazy(() => import('./VideosApp'));
-const iPodApp = React.lazy(() => import('./iPodApp'));
-const SoundboardApp = React.lazy(() => import('./SoundboardApp'));
-const SynthApp = React.lazy(() => import('./SynthApp'));
-const PhotoBoothApp = React.lazy(() => import('./PhotoBoothApp'));
-const TerminalApp = React.lazy(() => import('./TerminalApp'));
-const MinesweeperApp = React.lazy(() => import('./MinesweeperApp'));
-const VirtualPCApp = React.lazy(() => import('./VirtualPCApp'));
+// Direct imports for instant loading
+import PlaceholderApp from './PlaceholderApp';
+import SettingsApp from './SettingsApp';
+import FinderApp from './FinderApp';
+import TextEditApp from './TextEditApp';
+import MacPaintApp from './MacPaintApp';
+import VideosApp from './VideosApp';
+import iPodApp from './iPodApp';
+import SoundboardApp from './SoundboardApp';
+import SynthApp from './SynthApp';
+import PhotoBoothApp from './PhotoBoothApp';
+import TerminalApp from './TerminalApp';
+import MinesweeperApp from './MinesweeperApp';
+import VirtualPCApp from './VirtualPCApp';
 
 export const appRegistry: Record<string, AppMetadata> = {
   placeholder: {

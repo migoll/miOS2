@@ -1,16 +1,19 @@
 import React, { useCallback, useRef } from 'react';
 import { useDesktopStore } from '../stores/desktopStore';
+import { useSystemStore, wallpapers } from '../stores/systemStore';
 import { useSound } from '../utils/hooks';
 import { DesktopIcon } from './DesktopIcon';
 import { SelectionRectangle } from './SelectionRectangle';
 import { ContextMenu } from './ContextMenu';
 import { WindowManager } from './WindowManager';
 import { MenuBar } from './MenuBar';
+import { Taskbar } from './Taskbar';
 
 export const Desktop: React.FC = () => {
   const icons = useDesktopStore((state) => state.icons);
   const clearSelection = useDesktopStore((state) => state.clearSelection);
   const hideContextMenu = useDesktopStore((state) => state.hideContextMenu);
+  const settings = useSystemStore((state) => state.settings);
   const startSelectionRectangle = useDesktopStore((state) => state.startSelectionRectangle);
   const updateSelectionRectangle = useDesktopStore((state) => state.updateSelectionRectangle);
   const endSelectionRectangle = useDesktopStore((state) => state.endSelectionRectangle);
@@ -79,10 +82,12 @@ export const Desktop: React.FC = () => {
     window.location.reload();
   }, []);
 
+  const tidyUpIcons = useDesktopStore((state) => state.tidyUpIcons);
+
   const handleArrangeIcons = useCallback(() => {
-    // TODO: Implement icon arrangement logic
+    tidyUpIcons();
     playSound('click');
-  }, [playSound]);
+  }, [tidyUpIcons, playSound]);
 
   const handleNewFolder = useCallback(() => {
     // TODO: Implement new folder creation
@@ -94,17 +99,23 @@ export const Desktop: React.FC = () => {
     playSound('click');
   }, [playSound]);
 
+  const currentWallpaper = wallpapers.find(w => w.id === settings.wallpaper) || wallpapers[0];
+  const isDarkMode = settings.theme === 'dark';
+
   return (
-    <div className="relative w-full h-full overflow-hidden">
-      {/* Animated wallpaper background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-300 to-blue-400">
+    <div className={`relative w-full h-full overflow-hidden ${isDarkMode ? 'dark' : ''}`}>
+      {/* Dynamic wallpaper background */}
+      <div 
+        className="absolute inset-0" 
+        style={{ background: currentWallpaper.style }}
+      >
         <div className="absolute inset-0 opacity-60">
-          {/* Animated floating elements to simulate Nagrand-style landscape */}
+          {/* Animated floating elements */}
           <div className="absolute w-32 h-32 bg-white/10 rounded-full animate-wallpaper" style={{ top: '20%', left: '10%' }} />
           <div className="absolute w-24 h-24 bg-white/15 rounded-full animate-wallpaper" style={{ top: '60%', left: '70%', animationDelay: '5s' }} />
           <div className="absolute w-20 h-20 bg-white/20 rounded-full animate-wallpaper" style={{ top: '40%', left: '40%', animationDelay: '10s' }} />
-          <div className="absolute w-16 h-40 bg-green-300/20 rounded-lg animate-wallpaper" style={{ bottom: '10%', left: '20%', animationDelay: '3s' }} />
-          <div className="absolute w-12 h-36 bg-green-400/25 rounded-lg animate-wallpaper" style={{ bottom: '15%', right: '30%', animationDelay: '8s' }} />
+          <div className="absolute w-16 h-40 bg-white/20 rounded-lg animate-wallpaper" style={{ bottom: '10%', left: '20%', animationDelay: '3s' }} />
+          <div className="absolute w-12 h-36 bg-white/25 rounded-lg animate-wallpaper" style={{ bottom: '15%', right: '30%', animationDelay: '8s' }} />
         </div>
       </div>
 
@@ -138,6 +149,9 @@ export const Desktop: React.FC = () => {
 
       {/* Window manager */}
       <WindowManager />
+      
+      {/* Taskbar */}
+      <Taskbar />
     </div>
   );
 };

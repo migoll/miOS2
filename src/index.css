@@ -33,6 +33,18 @@ body {
 
 /* Aqua-style custom components */
 @layer components {
+  /* Dark mode overrides */
+  .dark .window-chrome {
+    @apply bg-gray-800/90 border-gray-600;
+  }
+  
+  .dark .window-titlebar {
+    @apply bg-gradient-to-b from-gray-700/60 to-gray-800/40 border-gray-600/50;
+  }
+  
+  .dark .menu-bar {
+    @apply bg-gray-800/90 border-gray-600/30;
+  }
   .window-chrome {
     @apply bg-white/90 backdrop-blur-sm border border-aqua-border rounded-xl shadow-aqua;
   }
@@ -63,5 +75,63 @@ body {
   
   .menu-bar {
     @apply bg-white/80 backdrop-blur-md border-b border-aqua-border/30;
+  }
+
+  /* Volume slider styling */
+  .slider {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    outline: none;
+    border-radius: 2px;
+  }
+  
+  .slider::-webkit-slider-track {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: transparent;
+    border: none;
+    outline: none;
+  }
+  
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    background: #007AFF !important;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 1px solid #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    margin-top: -4px; /* Center the thumb on the track */
+    position: relative;
+    z-index: 10;
+  }
+  
+  .slider::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: transparent;
+    border: none;
+    outline: none;
+  }
+  
+  .slider::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    background: #007AFF !important;
+    border-radius: 50%;
+    border: 1px solid #ffffff;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 10;
+  }
+  
+  .slider:focus::-webkit-slider-thumb {
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.5);
   }
 }

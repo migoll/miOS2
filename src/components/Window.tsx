@@ -1,6 +1,8 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { useWindowStore } from '../stores/windowStore';
+import { useSystemStore } from '../stores/systemStore';
 import { useSound } from '../utils/hooks';
+import { useTextSize } from '../utils/textSize';
 import type { WindowState } from '../types/index.js';
 import { getAppComponent } from '../apps/registry';
 
@@ -12,6 +14,10 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+  
+  const settings = useSystemStore((state) => state.settings);
+  const { getTextSizeClass } = useTextSize();
+  const isDarkMode = settings.theme === 'dark';
   
   const focusWindow = useWindowStore((state) => state.focusWindow);
   const closeWindow = useWindowStore((state) => state.closeWindow);
@@ -50,26 +56,25 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
     handleFocus();
     
     const rect = windowRef.current!.getBoundingClientRect();
-    setDragStart({
+    const startPos = {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
-    });
+    };
+    setDragStart(startPos);
     setIsDragging(true);
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (dragStart) {
-        const newX = e.clientX - dragStart.x;
-        const newY = e.clientY - dragStart.y;
-        
-        // Keep window on screen
-        const maxX = window.innerWidth - window.size.width;
-        const maxY = window.innerHeight - window.size.height;
-        
-        updateWindowPosition(window.id, {
-          x: Math.max(0, Math.min(maxX, newX)),
-          y: Math.max(0, Math.min(maxY, newY)),
-        });
-      }
+      const newX = e.clientX - startPos.x;
+      const newY = e.clientY - startPos.y;
+      
+      // Keep window on screen (using global window object for screen dimensions)
+      const maxX = globalThis.window.innerWidth - window.size.width;
+      const maxY = globalThis.window.innerHeight - window.size.height;
+      
+      updateWindowPosition(window.id, {
+        x: Math.max(0, Math.min(maxX, newX)),
+        y: Math.max(32, Math.min(maxY, newY)), // 32px for menu bar
+      });
     };
 
     const handleMouseUp = () => {
@@ -82,7 +87,7 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [window, dragStart, handleFocus, updateWindowPosition, playSound]);
+  }, [window, handleFocus, updateWindowPosition, playSound]);
 
   const handleResizeMouseDown = useCallback((e: React.MouseEvent, direction: string) => {
     e.preventDefault();
@@ -204,9 +209,9 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
 
         {/* Window title */}
         <div className="flex-1 text-center">
-          <span className="text-sm font-medium text-aqua-text select-none">
-            {window.title}
-          </span>
+                  <span className={`${getTextSizeClass()} font-medium ${isDarkMode ? 'text-gray-200' : 'text-aqua-text'} select-none`}>
+          {window.title}
+        </span>
         </div>
 
         {/* Spacer for symmetry */}

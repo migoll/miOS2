@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useSystemStore } from '../stores/systemStore';
+import { useSystemStore, wallpapers } from '../stores/systemStore';
 import { useSound } from '../utils/hooks';
 
 const SettingsApp: React.FC = () => {
@@ -37,6 +37,21 @@ const SettingsApp: React.FC = () => {
       uiPreferences: {
         ...settings.uiPreferences,
         soundsEnabled: !settings.uiPreferences.soundsEnabled,
+      },
+    });
+    playSound('click');
+  };
+
+  const handleWallpaperChange = (wallpaperId: string) => {
+    updateSettings({ wallpaper: wallpaperId });
+    playSound('click');
+  };
+
+  const handleTextSizeChange = (size: 'small' | 'medium' | 'large' | 'giga') => {
+    updateSettings({
+      uiPreferences: {
+        ...settings.uiPreferences,
+        textSize: size,
       },
     });
     playSound('click');
@@ -107,12 +122,73 @@ const SettingsApp: React.FC = () => {
                 </label>
               </div>
             </div>
+
+            <div className="bg-white/30 rounded-xl p-4">
+              <h3 className="font-semibold text-aqua-text mb-3">Text Size</h3>
+              
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { id: 'small', name: 'Small', size: '12px' },
+                  { id: 'medium', name: 'Medium', size: '14px' },
+                  { id: 'large', name: 'Large', size: '16px' },
+                  { id: 'giga', name: 'Giga', size: '20px' },
+                ].map((option) => (
+                  <button
+                    key={option.id}
+                    className={`
+                      p-2 rounded-lg border-2 transition-all duration-150
+                      ${settings.uiPreferences.textSize === option.id
+                        ? 'border-aqua-blue bg-aqua-blue/10' 
+                        : 'border-aqua-border hover:border-aqua-blue/50'
+                      }
+                    `}
+                    onClick={() => handleTextSizeChange(option.id as any)}
+                  >
+                    <div className="text-xs font-medium text-aqua-text">{option.name}</div>
+                    <div className="text-xs text-aqua-secondary">{option.size}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
         {activeTab === 'appearance' && (
           <div className="space-y-6">
             <h2 className="text-xl font-bold text-aqua-text mb-4">Appearance</h2>
+            
+            {/* Wallpaper Selection */}
+            <div className="bg-white/30 rounded-xl p-4">
+              <h3 className="font-semibold text-aqua-text mb-3">Wallpaper</h3>
+              
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                {wallpapers.map((wallpaper) => (
+                  <button
+                    key={wallpaper.id}
+                    className={`
+                      relative h-20 rounded-lg border-2 transition-all duration-150 overflow-hidden
+                      ${settings.wallpaper === wallpaper.id 
+                        ? 'border-aqua-blue ring-2 ring-aqua-blue/30' 
+                        : 'border-aqua-border hover:border-aqua-blue/50'
+                      }
+                    `}
+                    style={{ background: wallpaper.style }}
+                    onClick={() => handleWallpaperChange(wallpaper.id)}
+                  >
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                      <span className="text-white text-xs font-medium text-center px-2">
+                        {wallpaper.name}
+                      </span>
+                    </div>
+                    {settings.wallpaper === wallpaper.id && (
+                      <div className="absolute top-1 right-1 w-3 h-3 bg-aqua-blue rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs">✓</span>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
             
             <div className="bg-white/30 rounded-xl p-4">
               <h3 className="font-semibold text-aqua-text mb-3">Theme</h3>
@@ -148,12 +224,7 @@ const SettingsApp: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white/30 rounded-xl p-4">
-              <h3 className="font-semibold text-aqua-text mb-3">Wallpaper</h3>
-              <p className="text-sm text-aqua-secondary">
-                Currently using: Nagrand animated wallpaper
-              </p>
-            </div>
+
           </div>
         )}
 

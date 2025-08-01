@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { WindowState } from '../types/index.js';
+import { appRegistry } from '../apps/registry';
 
 interface WindowStore {
   windows: WindowState[];
@@ -23,19 +24,28 @@ export const useWindowStore = create<WindowStore>()(
       focusedWindowId: null,
       nextZIndex: 1000,
 
-      openWindow: (appKey, title, size = { width: 600, height: 400 }) => {
+      openWindow: (appKey, title, size) => {
         const id = `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         const { nextZIndex } = get();
+        
+        // Use app's default size if not provided
+        const appMetadata = appRegistry[appKey];
+        const windowSize = size || appMetadata?.defaultSize || { width: 600, height: 400 };
+        
+        // Center the window on screen with some offset for multiple windows
+        const windowOffset = get().windows.length * 30;
+        const centerX = (globalThis.window.innerWidth - windowSize.width) / 2 + windowOffset;
+        const centerY = (globalThis.window.innerHeight - windowSize.height) / 2 + windowOffset;
         
         const newWindow: WindowState = {
           id,
           title,
           appKey,
           position: { 
-            x: 100 + (get().windows.length * 30), 
-            y: 100 + (get().windows.length * 30) 
+            x: Math.max(0, centerX), 
+            y: Math.max(32, centerY) // 32px for menu bar
           },
-          size,
+          size: windowSize,
           isOpen: true,
           isMinimized: false,
           zIndex: nextZIndex,
@@ -112,7 +122,7 @@ export const useWindowStore = create<WindowStore>()(
       name: 'mios-windows',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ 
-        windows: state.windows.map(w => ({ ...w, isFocused: false })),
+        // Only persist zIndex, not window positions or states
         nextZIndex: state.nextZIndex,
       }),
     }

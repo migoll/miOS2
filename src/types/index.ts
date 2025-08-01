@@ -52,6 +52,7 @@ export interface SystemSettings {
   uiPreferences: {
     animationsEnabled: boolean;
     soundsEnabled: boolean;
+    textSize: 'small' | 'medium' | 'large' | 'giga';
   };
 }
 

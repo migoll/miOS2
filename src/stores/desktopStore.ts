@@ -34,6 +34,7 @@ interface DesktopStore {
   // Dragging
   startIconDrag: (offset: { x: number; y: number }) => void;
   endIconDrag: () => void;
+  tidyUpIcons: () => void;
 }
 
 const defaultIcons: DesktopIcon[] = [
@@ -218,6 +219,30 @@ export const useDesktopStore = create<DesktopStore>()(
 
       endIconDrag: () => {
         set({ isDraggingIcons: false, dragOffset: { x: 0, y: 0 } });
+      },
+
+      tidyUpIcons: () => {
+        set((state) => {
+          const gridSize = 96; // 80px icon width + 16px spacing
+          const startX = 20;
+          const startY = 50; // Account for menu bar + some padding
+          const maxColumns = Math.floor((window.innerWidth - 40) / gridSize);
+          
+          const arrangedIcons = state.icons.map((icon, index) => {
+            const row = Math.floor(index / maxColumns);
+            const col = index % maxColumns;
+            
+            return {
+              ...icon,
+              position: {
+                x: startX + (col * gridSize),
+                y: startY + (row * gridSize),
+              },
+            };
+          });
+
+          return { icons: arrangedIcons };
+        });
       },
     }),
     {
