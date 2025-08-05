@@ -1,10 +1,10 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { useWindowStore } from '../stores/windowStore';
-import { useSystemStore } from '../stores/systemStore';
-import { useSound } from '../utils/hooks';
-import { useTextSize } from '../utils/textSize';
-import type { WindowState } from '../types/index.js';
-import { getAppComponent } from '../apps/registry';
+import React, { useCallback, useRef, useState } from "react";
+import { useWindowStore } from "../stores/windowStore";
+import { useSystemStore } from "../stores/systemStore";
+import { useSound } from "../utils/hooks";
+import { useTextSize } from "../utils/textSize";
+import type { WindowState } from "../types/index.js";
+import { getAppComponent } from "../apps/registry";
 
 interface WindowProps {
   window: WindowState;
@@ -13,161 +13,171 @@ interface WindowProps {
 export const Window: React.FC<WindowProps> = ({ window }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState<string | null>(null);
-  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
-  
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(
+    null
+  );
+
   const settings = useSystemStore((state) => state.settings);
   const { getTextSizeClass } = useTextSize();
-  const isDarkMode = settings.theme === 'dark';
-  
+  const isDarkMode = settings.theme === "dark";
+
   const focusWindow = useWindowStore((state) => state.focusWindow);
   const closeWindow = useWindowStore((state) => state.closeWindow);
   const minimizeWindow = useWindowStore((state) => state.minimizeWindow);
-  const updateWindowPosition = useWindowStore((state) => state.updateWindowPosition);
+  const updateWindowPosition = useWindowStore(
+    (state) => state.updateWindowPosition
+  );
   const updateWindowSize = useWindowStore((state) => state.updateWindowSize);
-  
+
   const { playSound } = useSound();
   const windowRef = useRef<HTMLDivElement>(null);
-  
+
   const AppComponent = getAppComponent(window.appKey);
 
   const handleFocus = useCallback(() => {
     if (!window.isFocused) {
       focusWindow(window.id);
-      playSound('click');
+      playSound("click");
     }
   }, [window.isFocused, window.id, focusWindow, playSound]);
 
   const handleClose = useCallback(() => {
     closeWindow(window.id);
-    playSound('close');
+    playSound("close");
   }, [window.id, closeWindow, playSound]);
 
   const handleMinimize = useCallback(() => {
     minimizeWindow(window.id);
-    playSound('minimize');
+    playSound("minimize");
   }, [window.id, minimizeWindow, playSound]);
 
-  const handleTitleBarMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button !== 0) return; // Only handle left clicks
-    
-    e.preventDefault();
-    e.stopPropagation();
-    
-    handleFocus();
-    
-    const rect = windowRef.current!.getBoundingClientRect();
-    const startPos = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    };
-    setDragStart(startPos);
-    setIsDragging(true);
+  const handleTitleBarMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.button !== 0) return; // Only handle left clicks
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const newX = e.clientX - startPos.x;
-      const newY = e.clientY - startPos.y;
-      
-      // Keep window on screen (using global window object for screen dimensions)
-      const maxX = globalThis.window.innerWidth - window.size.width;
-      const maxY = globalThis.window.innerHeight - window.size.height;
-      
-      updateWindowPosition(window.id, {
-        x: Math.max(0, Math.min(maxX, newX)),
-        y: Math.max(32, Math.min(maxY, newY)), // 32px for menu bar
-      });
-    };
+      e.preventDefault();
+      e.stopPropagation();
 
-    const handleMouseUp = () => {
-      setIsDragging(false);
-      setDragStart(null);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      playSound('drop');
-    };
+      handleFocus();
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }, [window, handleFocus, updateWindowPosition, playSound]);
+      const rect = windowRef.current!.getBoundingClientRect();
+      const startPos = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+      setDragStart(startPos);
+      setIsDragging(true);
 
-  const handleResizeMouseDown = useCallback((e: React.MouseEvent, direction: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    handleFocus();
-    setIsResizing(direction);
-    
-    const startMouseX = e.clientX;
-    const startMouseY = e.clientY;
-    const startSize = { ...window.size };
-    const startPosition = { ...window.position };
+      const handleMouseMove = (e: MouseEvent) => {
+        const newX = e.clientX - startPos.x;
+        const newY = e.clientY - startPos.y;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - startMouseX;
-      const deltaY = e.clientY - startMouseY;
-      
-      let newWidth = startSize.width;
-      let newHeight = startSize.height;
-      let newX = startPosition.x;
-      let newY = startPosition.y;
+        // Keep window on screen (using global window object for screen dimensions)
+        const maxX = globalThis.window.innerWidth - window.size.width;
+        const maxY = globalThis.window.innerHeight - window.size.height;
 
-      if (direction.includes('right')) {
-        newWidth = Math.max(300, startSize.width + deltaX);
-      }
-      if (direction.includes('left')) {
-        newWidth = Math.max(300, startSize.width - deltaX);
-        newX = startPosition.x + (startSize.width - newWidth);
-      }
-      if (direction.includes('bottom')) {
-        newHeight = Math.max(200, startSize.height + deltaY);
-      }
-      if (direction.includes('top')) {
-        newHeight = Math.max(200, startSize.height - deltaY);
-        newY = startPosition.y + (startSize.height - newHeight);
-      }
+        updateWindowPosition(window.id, {
+          x: Math.max(0, Math.min(maxX, newX)),
+          y: Math.max(32, Math.min(maxY, newY)), // 32px for menu bar
+        });
+      };
 
-      updateWindowSize(window.id, { width: newWidth, height: newHeight });
-      if (newX !== startPosition.x || newY !== startPosition.y) {
-        updateWindowPosition(window.id, { x: newX, y: newY });
-      }
-    };
+      const handleMouseUp = () => {
+        setIsDragging(false);
+        setDragStart(null);
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+        playSound("drop");
+      };
 
-    const handleMouseUp = () => {
-      setIsResizing(null);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    },
+    [window, handleFocus, updateWindowPosition, playSound]
+  );
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }, [window, handleFocus, updateWindowSize, updateWindowPosition]);
+  const handleResizeMouseDown = useCallback(
+    (e: React.MouseEvent, direction: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      handleFocus();
+      setIsResizing(direction);
+
+      const startMouseX = e.clientX;
+      const startMouseY = e.clientY;
+      const startSize = { ...window.size };
+      const startPosition = { ...window.position };
+
+      const handleMouseMove = (e: MouseEvent) => {
+        const deltaX = e.clientX - startMouseX;
+        const deltaY = e.clientY - startMouseY;
+
+        let newWidth = startSize.width;
+        let newHeight = startSize.height;
+        let newX = startPosition.x;
+        let newY = startPosition.y;
+
+        if (direction.includes("right")) {
+          newWidth = Math.max(300, startSize.width + deltaX);
+        }
+        if (direction.includes("left")) {
+          newWidth = Math.max(300, startSize.width - deltaX);
+          newX = startPosition.x + (startSize.width - newWidth);
+        }
+        if (direction.includes("bottom")) {
+          newHeight = Math.max(200, startSize.height + deltaY);
+        }
+        if (direction.includes("top")) {
+          newHeight = Math.max(200, startSize.height - deltaY);
+          newY = startPosition.y + (startSize.height - newHeight);
+        }
+
+        updateWindowSize(window.id, { width: newWidth, height: newHeight });
+        if (newX !== startPosition.x || newY !== startPosition.y) {
+          updateWindowPosition(window.id, { x: newX, y: newY });
+        }
+      };
+
+      const handleMouseUp = () => {
+        setIsResizing(null);
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    },
+    [window, handleFocus, updateWindowSize, updateWindowPosition]
+  );
 
   // Keyboard shortcuts
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!window.isFocused) return;
-      
-      if (e.key === 'Escape' || (e.key === 'w' && (e.metaKey || e.ctrlKey))) {
+
+      if (e.key === "Escape" || (e.key === "w" && (e.metaKey || e.ctrlKey))) {
         e.preventDefault();
         handleClose();
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [window.isFocused, handleClose]);
 
   const getCursorStyle = (direction: string) => {
     const cursorMap: Record<string, string> = {
-      'top': 'n-resize',
-      'bottom': 's-resize',
-      'left': 'w-resize',
-      'right': 'e-resize',
-      'top-left': 'nw-resize',
-      'top-right': 'ne-resize',
-      'bottom-left': 'sw-resize',
-      'bottom-right': 'se-resize',
+      top: "n-resize",
+      bottom: "s-resize",
+      left: "w-resize",
+      right: "e-resize",
+      "top-left": "nw-resize",
+      "top-right": "ne-resize",
+      "bottom-left": "sw-resize",
+      "bottom-right": "se-resize",
     };
-    return cursorMap[direction] || 'default';
+    return cursorMap[direction] || "default";
   };
 
   return (
@@ -175,8 +185,8 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
       ref={windowRef}
       className={`
         absolute window-chrome transition-shadow duration-200
-        ${window.isFocused ? 'shadow-aqua-lg' : 'shadow-aqua'}
-        ${isDragging ? 'cursor-move' : ''}
+        ${window.isFocused ? "shadow-aqua-lg" : "shadow-aqua"}
+        ${isDragging ? "cursor-move" : ""}
       `}
       style={{
         left: window.position.x,
@@ -209,9 +219,13 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
 
         {/* Window title */}
         <div className="flex-1 text-center">
-                  <span className={`${getTextSizeClass()} font-medium ${isDarkMode ? 'text-gray-200' : 'text-aqua-text'} select-none`}>
-          {window.title}
-        </span>
+          <span
+            className={`${getTextSizeClass()} font-medium ${
+              isDarkMode ? "text-gray-200" : "text-aqua-text"
+            } select-none`}
+          >
+            {window.title}
+          </span>
         </div>
 
         {/* Spacer for symmetry */}
@@ -219,8 +233,13 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
       </div>
 
       {/* Window content */}
-      <div className="flex-1 overflow-hidden" style={{ height: window.size.height - 32 }}>
-        {AppComponent ? <AppComponent /> : (
+      <div
+        className="flex-1 overflow-hidden"
+        style={{ height: window.size.height - 32 }}
+      >
+        {AppComponent ? (
+          <AppComponent />
+        ) : (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="text-4xl mb-2">🖥️</div>
@@ -236,37 +255,37 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
           {/* Edges */}
           <div
             className="absolute top-0 left-2 right-2 h-1 hover:bg-aqua-blue/20 cursor-n-resize"
-            onMouseDown={(e) => handleResizeMouseDown(e, 'top')}
+            onMouseDown={(e) => handleResizeMouseDown(e, "top")}
           />
           <div
             className="absolute bottom-0 left-2 right-2 h-1 hover:bg-aqua-blue/20 cursor-s-resize"
-            onMouseDown={(e) => handleResizeMouseDown(e, 'bottom')}
+            onMouseDown={(e) => handleResizeMouseDown(e, "bottom")}
           />
           <div
             className="absolute left-0 top-2 bottom-2 w-1 hover:bg-aqua-blue/20 cursor-w-resize"
-            onMouseDown={(e) => handleResizeMouseDown(e, 'left')}
+            onMouseDown={(e) => handleResizeMouseDown(e, "left")}
           />
           <div
             className="absolute right-0 top-2 bottom-2 w-1 hover:bg-aqua-blue/20 cursor-e-resize"
-            onMouseDown={(e) => handleResizeMouseDown(e, 'right')}
+            onMouseDown={(e) => handleResizeMouseDown(e, "right")}
           />
-          
+
           {/* Corners */}
           <div
             className="absolute top-0 left-0 w-2 h-2 hover:bg-aqua-blue/20 cursor-nw-resize"
-            onMouseDown={(e) => handleResizeMouseDown(e, 'top-left')}
+            onMouseDown={(e) => handleResizeMouseDown(e, "top-left")}
           />
           <div
             className="absolute top-0 right-0 w-2 h-2 hover:bg-aqua-blue/20 cursor-ne-resize"
-            onMouseDown={(e) => handleResizeMouseDown(e, 'top-right')}
+            onMouseDown={(e) => handleResizeMouseDown(e, "top-right")}
           />
           <div
             className="absolute bottom-0 left-0 w-2 h-2 hover:bg-aqua-blue/20 cursor-sw-resize"
-            onMouseDown={(e) => handleResizeMouseDown(e, 'bottom-left')}
+            onMouseDown={(e) => handleResizeMouseDown(e, "bottom-left")}
           />
           <div
             className="absolute bottom-0 right-0 w-2 h-2 hover:bg-aqua-blue/20 cursor-se-resize"
-            onMouseDown={(e) => handleResizeMouseDown(e, 'bottom-right')}
+            onMouseDown={(e) => handleResizeMouseDown(e, "bottom-right")}
           />
         </>
       )}

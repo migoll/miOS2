@@ -1,26 +1,44 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import type { DesktopIcon, SelectionRectangle, ContextMenu } from '../types/index.js';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import type {
+  DesktopIcon,
+  SelectionRectangle,
+  ContextMenu,
+} from "../types/index.js";
 
 interface DesktopStore {
   icons: DesktopIcon[];
   selectedIconIds: string[];
   selectionRectangle: SelectionRectangle;
   contextMenu: ContextMenu;
+
+  // Ghost dragging state
   isDraggingIcons: boolean;
   dragOffset: { x: number; y: number };
+  draggedIconIds: string[];
+  disableIconTransitions: boolean;
+
+  // Version for cache invalidation
+  version: number;
 
   // Icon management
-  addIcon: (icon: Omit<DesktopIcon, 'id'>) => string;
+  addIcon: (icon: Omit<DesktopIcon, "id">) => string;
   removeIcon: (id: string) => void;
   updateIconPosition: (id: string, position: { x: number; y: number }) => void;
-  updateMultipleIconPositions: (updates: { id: string; position: { x: number; y: number } }[]) => void;
+  updateMultipleIconPositions: (
+    updates: { id: string; position: { x: number; y: number } }[]
+  ) => void;
 
   // Selection management
   selectIcon: (id: string, multiSelect?: boolean) => void;
   deselectIcon: (id: string) => void;
   clearSelection: () => void;
-  selectIconsInRectangle: (rect: { x: number; y: number; width: number; height: number }) => void;
+  selectIconsInRectangle: (rect: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }) => void;
 
   // Selection rectangle
   startSelectionRectangle: (position: { x: number; y: number }) => void;
@@ -28,29 +46,147 @@ interface DesktopStore {
   endSelectionRectangle: () => void;
 
   // Context menu
-  showContextMenu: (position: { x: number; y: number }, type: 'desktop' | 'icon', targetId?: string) => void;
+  showContextMenu: (
+    position: { x: number; y: number },
+    type: "desktop" | "icon",
+    targetId?: string
+  ) => void;
   hideContextMenu: () => void;
 
-  // Dragging
-  startIconDrag: (offset: { x: number; y: number }) => void;
-  endIconDrag: () => void;
+  // Ghost dragging actions
+  startIconDrag: (iconIds: string[], offset: { x: number; y: number }) => void;
+  updateIconDrag: (offset: { x: number; y: number }) => void;
+  endIconDrag: (
+    finalPositions: Array<{ id: string; position: { x: number; y: number } }>
+  ) => void;
+
   tidyUpIcons: () => void;
 }
 
 const defaultIcons: DesktopIcon[] = [
-  { id: 'icon-finder', appKey: 'finder', position: { x: 50, y: 120 }, name: 'Finder', icon: '📁' },
-  { id: 'icon-textedit', appKey: 'textedit', position: { x: 50, y: 200 }, name: 'TextEdit', icon: '📝' },
-  { id: 'icon-macpaint', appKey: 'macpaint', position: { x: 50, y: 280 }, name: 'MacPaint', icon: '🎨' },
-  { id: 'icon-videos', appKey: 'videos', position: { x: 150, y: 120 }, name: 'Videos', icon: '📺' },
-  { id: 'icon-ipod', appKey: 'ipod', position: { x: 150, y: 200 }, name: 'iPod', icon: '🎵' },
-  { id: 'icon-soundboard', appKey: 'soundboard', position: { x: 150, y: 280 }, name: 'Soundboard', icon: '🔊' },
-  { id: 'icon-synth', appKey: 'synth', position: { x: 250, y: 120 }, name: 'Synth', icon: '🎹' },
-  { id: 'icon-photobooth', appKey: 'photobooth', position: { x: 250, y: 200 }, name: 'Photo Booth', icon: '📸' },
-  { id: 'icon-terminal', appKey: 'terminal', position: { x: 250, y: 280 }, name: 'Terminal', icon: '⚡' },
-  { id: 'icon-minesweeper', appKey: 'minesweeper', position: { x: 350, y: 120 }, name: 'Minesweeper', icon: '💣' },
-  { id: 'icon-virtualpc', appKey: 'virtualpc', position: { x: 350, y: 200 }, name: 'Virtual PC', icon: '💻' },
-  { id: 'icon-settings', appKey: 'settings', position: { x: 350, y: 280 }, name: 'Settings', icon: '⚙️' },
+  {
+    id: "icon-finder",
+    appKey: "finder",
+    position: { x: 50, y: 120 },
+    name: "Finder",
+    icon: "📁",
+  },
+  {
+    id: "icon-textedit",
+    appKey: "textedit",
+    position: { x: 50, y: 200 },
+    name: "TextEdit",
+    icon: "📝",
+  },
+  {
+    id: "icon-macpaint",
+    appKey: "macpaint",
+    position: { x: 50, y: 280 },
+    name: "MacPaint",
+    icon: "🎨",
+  },
+  {
+    id: "icon-videos",
+    appKey: "videos",
+    position: { x: 150, y: 120 },
+    name: "Videos",
+    icon: "📺",
+  },
+  {
+    id: "icon-ipod",
+    appKey: "ipod",
+    position: { x: 150, y: 200 },
+    name: "iPod",
+    icon: "🎵",
+  },
+  {
+    id: "icon-soundboard",
+    appKey: "soundboard",
+    position: { x: 150, y: 280 },
+    name: "Soundboard",
+    icon: "🔊",
+  },
+  {
+    id: "icon-synth",
+    appKey: "synth",
+    position: { x: 250, y: 120 },
+    name: "Synth",
+    icon: "🎹",
+  },
+  {
+    id: "icon-photobooth",
+    appKey: "photobooth",
+    position: { x: 250, y: 200 },
+    name: "Photo Booth",
+    icon: "📸",
+  },
+  {
+    id: "icon-terminal",
+    appKey: "terminal",
+    position: { x: 250, y: 280 },
+    name: "Terminal",
+    icon: "⚡",
+  },
+  {
+    id: "icon-minesweeper",
+    appKey: "minesweeper",
+    position: { x: 350, y: 120 },
+    name: "Minesweeper",
+    icon: "💣",
+  },
+  {
+    id: "icon-virtualpc",
+    appKey: "virtualpc",
+    position: { x: 350, y: 200 },
+    name: "Virtual PC",
+    icon: "💻",
+  },
+  {
+    id: "icon-settings",
+    appKey: "settings",
+    position: { x: 350, y: 280 },
+    name: "Settings",
+    icon: "⚙️",
+  },
+  // Portfolio Apps
+  {
+    id: "icon-aboutme",
+    appKey: "aboutme",
+    position: { x: 450, y: 120 },
+    name: "About Me",
+    icon: "👤",
+  },
+  {
+    id: "icon-browser",
+    appKey: "browser",
+    position: { x: 450, y: 200 },
+    name: "Browser",
+    icon: "🌐",
+  },
+  {
+    id: "icon-projects",
+    appKey: "projects",
+    position: { x: 450, y: 280 },
+    name: "Projects",
+    icon: "🚀",
+  },
+  {
+    id: "icon-resume",
+    appKey: "resume",
+    position: { x: 550, y: 120 },
+    name: "Resume",
+    icon: "📄",
+  },
+  {
+    id: "icon-crypto",
+    appKey: "crypto",
+    position: { x: 550, y: 200 },
+    name: "Crypto Tracker",
+    icon: "blockchain_10439415.png",
+  },
 ];
+
+const CURRENT_VERSION = 7;
 
 export const useDesktopStore = create<DesktopStore>()(
   persist(
@@ -65,10 +201,17 @@ export const useDesktopStore = create<DesktopStore>()(
       contextMenu: {
         isVisible: false,
         position: { x: 0, y: 0 },
-        type: 'desktop',
+        type: "desktop",
       },
+
+      // Ghost dragging initial state
       isDraggingIcons: false,
       dragOffset: { x: 0, y: 0 },
+      draggedIconIds: [],
+      disableIconTransitions: false,
+
+      // Version for cache invalidation
+      version: CURRENT_VERSION,
 
       addIcon: (iconData) => {
         const id = `icon-${Date.now()}`;
@@ -79,14 +222,16 @@ export const useDesktopStore = create<DesktopStore>()(
 
       removeIcon: (id) => {
         set((state) => ({
-          icons: state.icons.filter(icon => icon.id !== id),
-          selectedIconIds: state.selectedIconIds.filter(selectedId => selectedId !== id),
+          icons: state.icons.filter((icon) => icon.id !== id),
+          selectedIconIds: state.selectedIconIds.filter(
+            (selectedId) => selectedId !== id
+          ),
         }));
       },
 
       updateIconPosition: (id, position) => {
         set((state) => ({
-          icons: state.icons.map(icon =>
+          icons: state.icons.map((icon) =>
             icon.id === id ? { ...icon, position } : icon
           ),
         }));
@@ -94,8 +239,8 @@ export const useDesktopStore = create<DesktopStore>()(
 
       updateMultipleIconPositions: (updates) => {
         set((state) => ({
-          icons: state.icons.map(icon => {
-            const update = updates.find(u => u.id === icon.id);
+          icons: state.icons.map((icon) => {
+            const update = updates.find((u) => u.id === icon.id);
             return update ? { ...icon, position: update.position } : icon;
           }),
         }));
@@ -107,7 +252,9 @@ export const useDesktopStore = create<DesktopStore>()(
             const isSelected = state.selectedIconIds.includes(id);
             return {
               selectedIconIds: isSelected
-                ? state.selectedIconIds.filter(selectedId => selectedId !== id)
+                ? state.selectedIconIds.filter(
+                    (selectedId) => selectedId !== id
+                  )
                 : [...state.selectedIconIds, id],
             };
           } else {
@@ -118,7 +265,9 @@ export const useDesktopStore = create<DesktopStore>()(
 
       deselectIcon: (id) => {
         set((state) => ({
-          selectedIconIds: state.selectedIconIds.filter(selectedId => selectedId !== id),
+          selectedIconIds: state.selectedIconIds.filter(
+            (selectedId) => selectedId !== id
+          ),
         }));
       },
 
@@ -129,14 +278,14 @@ export const useDesktopStore = create<DesktopStore>()(
       selectIconsInRectangle: (rect) => {
         const { icons } = get();
         const selectedIds = icons
-          .filter(icon => {
+          .filter((icon) => {
             const iconRect = {
               x: icon.position.x,
               y: icon.position.y,
               width: 64, // Assume icon width
               height: 80, // Assume icon height including label
             };
-            
+
             return (
               iconRect.x < rect.x + rect.width &&
               iconRect.x + iconRect.width > rect.x &&
@@ -144,7 +293,7 @@ export const useDesktopStore = create<DesktopStore>()(
               iconRect.y + iconRect.height > rect.y
             );
           })
-          .map(icon => icon.id);
+          .map((icon) => icon.id);
 
         set({ selectedIconIds: selectedIds });
       },
@@ -172,17 +321,30 @@ export const useDesktopStore = create<DesktopStore>()(
         const { selectionRectangle } = get();
         if (selectionRectangle.isActive) {
           const rect = {
-            x: Math.min(selectionRectangle.startPosition.x, selectionRectangle.currentPosition.x),
-            y: Math.min(selectionRectangle.startPosition.y, selectionRectangle.currentPosition.y),
-            width: Math.abs(selectionRectangle.currentPosition.x - selectionRectangle.startPosition.x),
-            height: Math.abs(selectionRectangle.currentPosition.y - selectionRectangle.startPosition.y),
+            x: Math.min(
+              selectionRectangle.startPosition.x,
+              selectionRectangle.currentPosition.x
+            ),
+            y: Math.min(
+              selectionRectangle.startPosition.y,
+              selectionRectangle.currentPosition.y
+            ),
+            width: Math.abs(
+              selectionRectangle.currentPosition.x -
+                selectionRectangle.startPosition.x
+            ),
+            height: Math.abs(
+              selectionRectangle.currentPosition.y -
+                selectionRectangle.startPosition.y
+            ),
           };
-          
-          if (rect.width > 5 || rect.height > 5) { // Only select if rectangle is meaningful
+
+          if (rect.width > 5 || rect.height > 5) {
+            // Only select if rectangle is meaningful
             get().selectIconsInRectangle(rect);
           }
         }
-        
+
         set({
           selectionRectangle: {
             isActive: false,
@@ -208,17 +370,41 @@ export const useDesktopStore = create<DesktopStore>()(
           contextMenu: {
             isVisible: false,
             position: { x: 0, y: 0 },
-            type: 'desktop',
+            type: "desktop",
           },
         });
       },
 
-      startIconDrag: (offset) => {
-        set({ isDraggingIcons: true, dragOffset: offset });
+      // Ghost dragging methods
+      startIconDrag: (iconIds, offset) => {
+        set({
+          isDraggingIcons: true,
+          dragOffset: offset,
+          draggedIconIds: iconIds,
+          disableIconTransitions: true,
+        });
       },
 
-      endIconDrag: () => {
-        set({ isDraggingIcons: false, dragOffset: { x: 0, y: 0 } });
+      updateIconDrag: (offset) => {
+        set({ dragOffset: offset });
+      },
+
+      endIconDrag: (finalPositions) => {
+        // Update all icon positions and clear ghost state
+        set((state) => ({
+          icons: state.icons.map((icon) => {
+            const update = finalPositions.find((pos) => pos.id === icon.id);
+            return update ? { ...icon, position: update.position } : icon;
+          }),
+          isDraggingIcons: false,
+          dragOffset: { x: 0, y: 0 },
+          draggedIconIds: [],
+        }));
+
+        // Re-enable transitions after a brief delay
+        setTimeout(() => {
+          set({ disableIconTransitions: false });
+        }, 50);
       },
 
       tidyUpIcons: () => {
@@ -227,16 +413,16 @@ export const useDesktopStore = create<DesktopStore>()(
           const startX = 20;
           const startY = 50; // Account for menu bar + some padding
           const maxColumns = Math.floor((window.innerWidth - 40) / gridSize);
-          
+
           const arrangedIcons = state.icons.map((icon, index) => {
             const row = Math.floor(index / maxColumns);
             const col = index % maxColumns;
-            
+
             return {
               ...icon,
               position: {
-                x: startX + (col * gridSize),
-                y: startY + (row * gridSize),
+                x: startX + col * gridSize,
+                y: startY + row * gridSize,
               },
             };
           });
@@ -246,11 +432,19 @@ export const useDesktopStore = create<DesktopStore>()(
       },
     }),
     {
-      name: 'mios-desktop',
+      name: "mios-desktop",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         icons: state.icons,
+        version: state.version,
       }),
+      onRehydrateStorage: () => (state) => {
+        // Check if version has changed and reset icons if needed
+        if (state && state.version !== CURRENT_VERSION) {
+          state.icons = defaultIcons;
+          state.version = CURRENT_VERSION;
+        }
+      },
     }
   )
 );

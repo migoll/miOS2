@@ -1,0 +1,21 @@
+{
+  "name": "crypto-api-proxy",
+  "version": "1.0.0",
+  "description": "CORS proxy server for real cryptocurrency data",
+  "main": "crypto-proxy-server.js",
+  "scripts": {
+    "start": "node crypto-proxy-server.js",
+    "dev": "nodemon crypto-proxy-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": ["crypto", "api", "proxy", "cors", "cryptocurrency"],
+  "author": "miOS Crypto Tracker",
+  "license": "MIT"
+}

@@ -18,7 +18,12 @@ export interface AppMetadata {
   icon: string;
   defaultSize: { width: number; height: number };
   component: React.ComponentType<any>;
-  category?: 'system' | 'utility' | 'creative' | 'entertainment' | 'development';
+  category?:
+    | "system"
+    | "utility"
+    | "creative"
+    | "entertainment"
+    | "development";
 }
 
 export interface DesktopIcon {
@@ -39,12 +44,12 @@ export interface SelectionRectangle {
 export interface ContextMenu {
   isVisible: boolean;
   position: { x: number; y: number };
-  type: 'desktop' | 'icon' | 'window';
+  type: "desktop" | "icon" | "window";
   targetId?: string;
 }
 
 export interface SystemSettings {
-  theme: 'aqua' | 'dark';
+  theme: "aqua" | "dark";
   wallpaper: string;
   volume: number;
   isMuted: boolean;
@@ -52,14 +57,14 @@ export interface SystemSettings {
   uiPreferences: {
     animationsEnabled: boolean;
     soundsEnabled: boolean;
-    textSize: 'small' | 'medium' | 'large' | 'giga';
+    textSize: "small" | "medium" | "large" | "giga";
   };
 }
 
 export interface FileSystemEntity {
   id: string;
   name: string;
-  type: 'file' | 'folder';
+  type: "file" | "folder";
   content?: string;
   children?: string[]; // IDs of child entities
   parentId?: string;
@@ -75,17 +80,17 @@ export interface Sound {
   audio?: HTMLAudioElement;
 }
 
-export type SoundName = 
-  | 'click' 
-  | 'open' 
-  | 'close' 
-  | 'minimize' 
-  | 'error' 
-  | 'hover' 
-  | 'drop'
-  | 'select'
-  | 'menu_open'
-  | 'menu_close';
+export type SoundName =
+  | "click"
+  | "open"
+  | "close"
+  | "minimize"
+  | "error"
+  | "hover"
+  | "drop"
+  | "select"
+  | "menu_open"
+  | "menu_close";
 
 export interface ContextMenuItem {
   id: string;
