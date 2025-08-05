@@ -1,64 +1,73 @@
-import React, { useState } from 'react';
-import { useFileSystemStore } from '../stores/fileSystemStore';
-import { useSound } from '../utils/hooks';
+import React, { useState } from "react";
+import { useFileSystemStore } from "../stores/fileSystemStore";
+import { useSound } from "../utils/hooks";
+import type { FileSystemEntity } from "../types";
 
 const FinderApp: React.FC = () => {
   const entities = useFileSystemStore((state) => state.entities);
   const getChildren = useFileSystemStore((state) => state.getChildren);
   const createEntity = useFileSystemStore((state) => state.createEntity);
   const { playSound } = useSound();
-  
-  const [currentFolderId, setCurrentFolderId] = useState('root');
+
+  const [currentFolderId, setCurrentFolderId] = useState("root");
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   const currentFolder = entities[currentFolderId];
   const children = getChildren(currentFolderId);
   const breadcrumbs = [];
-  
+
   // Build breadcrumb path
-  let pathFolder = currentFolder;
+  let pathFolder: FileSystemEntity | null = currentFolder;
   while (pathFolder) {
     breadcrumbs.unshift(pathFolder);
-    pathFolder = pathFolder.parentId ? entities[pathFolder.parentId] : null;
+    pathFolder = pathFolder.parentId
+      ? entities[pathFolder.parentId] || null
+      : null;
   }
 
   const handleItemDoubleClick = (itemId: string) => {
     const item = entities[itemId];
-    if (item.type === 'folder') {
+    if (item.type === "folder") {
       setCurrentFolderId(itemId);
-      playSound('open');
+      playSound("open");
     }
   };
 
   const handleItemClick = (itemId: string) => {
     setSelectedItemId(itemId);
-    playSound('click');
+    playSound("click");
   };
 
   const handleNewFolder = () => {
-    const name = prompt('Enter folder name:');
+    const name = prompt("Enter folder name:");
     if (name) {
       createEntity({
         name,
-        type: 'folder',
+        type: "folder",
         parentId: currentFolderId,
-        path: currentFolder.path === '/' ? `/${name}` : `${currentFolder.path}/${name}`,
+        path:
+          currentFolder.path === "/"
+            ? `/${name}`
+            : `${currentFolder.path}/${name}`,
       });
-      playSound('open');
+      playSound("open");
     }
   };
 
   const handleNewFile = () => {
-    const name = prompt('Enter file name:');
+    const name = prompt("Enter file name:");
     if (name) {
       createEntity({
         name,
-        type: 'file',
-        content: '',
+        type: "file",
+        content: "",
         parentId: currentFolderId,
-        path: currentFolder.path === '/' ? `/${name}` : `${currentFolder.path}/${name}`,
+        path:
+          currentFolder.path === "/"
+            ? `/${name}`
+            : `${currentFolder.path}/${name}`,
       });
-      playSound('open');
+      playSound("open");
     }
   };
 
@@ -66,20 +75,20 @@ const FinderApp: React.FC = () => {
     <div className="flex flex-col h-full bg-aqua-background">
       {/* Toolbar */}
       <div className="flex items-center gap-2 p-3 border-b border-aqua-border bg-white/30">
-        <button 
+        <button
           className="px-3 py-1 bg-aqua-blue text-white rounded text-sm hover:bg-aqua-dark transition-colors"
-          onClick={() => setCurrentFolderId(currentFolder.parentId || 'root')}
-          disabled={currentFolderId === 'root'}
+          onClick={() => setCurrentFolderId(currentFolder.parentId || "root")}
+          disabled={currentFolderId === "root"}
         >
           ← Back
         </button>
-        <button 
+        <button
           className="px-3 py-1 bg-aqua-accent text-white rounded text-sm hover:bg-green-600 transition-colors"
           onClick={handleNewFolder}
         >
           New Folder
         </button>
-        <button 
+        <button
           className="px-3 py-1 bg-aqua-accent text-white rounded text-sm hover:bg-green-600 transition-colors"
           onClick={handleNewFile}
         >
@@ -96,7 +105,7 @@ const FinderApp: React.FC = () => {
                 className="hover:text-aqua-blue transition-colors"
                 onClick={() => {
                   setCurrentFolderId(folder.id);
-                  playSound('click');
+                  playSound("click");
                 }}
               >
                 {folder.name}
@@ -123,13 +132,17 @@ const FinderApp: React.FC = () => {
                 key={item.id}
                 className={`
                   flex flex-col items-center p-3 rounded-lg cursor-pointer transition-all duration-150
-                  ${selectedItemId === item.id ? 'bg-aqua-blue/20 ring-2 ring-aqua-blue' : 'hover:bg-white/20'}
+                  ${
+                    selectedItemId === item.id
+                      ? "bg-white/10 ring-2 ring-white/20"
+                      : "hover:bg-white/10 hover:ring-1 hover:ring-white/20"
+                  }
                 `}
                 onClick={() => handleItemClick(item.id)}
                 onDoubleClick={() => handleItemDoubleClick(item.id)}
               >
                 <div className="text-3xl mb-2">
-                  {item.type === 'folder' ? '📁' : '📄'}
+                  {item.type === "folder" ? "📁" : "📄"}
                 </div>
                 <span className="text-sm text-center text-aqua-text font-medium break-words">
                   {item.name}

@@ -1,126 +1,139 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useSystemStore } from '../stores/systemStore';
-import { useWindowStore } from '../stores/windowStore';
-import { useSound } from '../utils/hooks';
-import { useTextSize } from '../utils/textSize';
-import { VolumeControl } from './VolumeControl';
-import { ConnectionIndicator } from './ConnectionIndicator';
+import React, { useState, useRef, useEffect } from "react";
+import { useSystemStore } from "../stores/systemStore";
+import { useWindowStore } from "../stores/windowStore";
+import { useDesktopStore } from "../stores/desktopStore";
+import { useSound } from "../utils/hooks";
+import { VolumeControl } from "./VolumeControl";
+import { appRegistry } from "../apps/registry";
+import { ConnectionIndicator } from "./ConnectionIndicator";
 
 export const MenuBar: React.FC = () => {
   const [showSystemMenu, setShowSystemMenu] = useState(false);
   const [showLauncher, setShowLauncher] = useState(false);
+  const [showDate, setShowDate] = useState(false);
   const currentTime = useSystemStore((state) => state.currentTime);
-  const settings = useSystemStore((state) => state.settings);
+
   const openWindow = useWindowStore((state) => state.openWindow);
   const { playSound } = useSound();
-  const { getTextSizeClass } = useTextSize();
-  const isDarkMode = settings.theme === 'dark';
-  
+
   const systemMenuRef = useRef<HTMLDivElement>(null);
   const launcherRef = useRef<HTMLDivElement>(null);
+  const clockRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (systemMenuRef.current && !systemMenuRef.current.contains(event.target as Node)) {
+      if (
+        systemMenuRef.current &&
+        !systemMenuRef.current.contains(event.target as Node)
+      ) {
         setShowSystemMenu(false);
       }
-      if (launcherRef.current && !launcherRef.current.contains(event.target as Node)) {
+      if (
+        launcherRef.current &&
+        !launcherRef.current.contains(event.target as Node)
+      ) {
         setShowLauncher(false);
+      }
+      if (
+        clockRef.current &&
+        !clockRef.current.contains(event.target as Node)
+      ) {
+        setShowDate(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleSystemMenuClick = () => {
     setShowSystemMenu(!showSystemMenu);
     setShowLauncher(false);
-    playSound('menu_open');
+    setShowDate(false);
+    playSound("menu_open");
   };
 
   const handleLauncherClick = () => {
     setShowLauncher(!showLauncher);
     setShowSystemMenu(false);
-    playSound('menu_open');
+    setShowDate(false);
+    playSound("menu_open");
+  };
+
+  const handleClockClick = () => {
+    setShowDate(!showDate);
+    setShowSystemMenu(false);
+    setShowLauncher(false);
+    playSound("menu_open");
   };
 
   const openApp = (appKey: string, title?: string) => {
     openWindow(appKey, title || appKey);
     setShowSystemMenu(false);
     setShowLauncher(false);
-    playSound('open');
+    setShowDate(false);
+    playSound("open");
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
       hour12: false,
     });
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
     });
   };
 
-  const launcherApps = [
-    { key: 'finder', name: 'Finder', icon: '📁' },
-    { key: 'textEdit', name: 'TextEdit', icon: '📝' },
-    { key: 'macpaint', name: 'MacPaint', icon: '🎨' },
-    { key: 'photobooth', name: 'Photo Booth', icon: '📷' },
-    { key: 'videos', name: 'Videos', icon: '🎬' },
-    { key: 'soundboard', name: 'Soundboard', icon: '🔊' },
-    { key: 'synth', name: 'Synth', icon: '🎹' },
-    { key: 'ipod', name: 'iPod', icon: '🎵' },
-    { key: 'terminal', name: 'Terminal', icon: '⚡' },
-    { key: 'minesweeper', name: 'Minesweeper', icon: '💣' },
-    { key: 'virtualpc', name: 'Virtual PC', icon: '💻' },
-    { key: 'settings', name: 'Settings', icon: '⚙️' },
-  ];
+  const icons = useDesktopStore((state) => state.icons);
 
-  const menuBarClasses = `menu-bar fixed top-0 left-0 right-0 h-8 flex items-center justify-between px-4 z-[1000] backdrop-blur-md border-b ${
-    isDarkMode ? 'bg-gray-800/90 border-gray-600/30' : 'bg-white/80 border-aqua-border/30'
-  }`;
+  // Get all apps from registry, excluding finder and placeholder, and filter out apps already on desktop
+  const launcherApps = Object.values(appRegistry)
+    .filter((app) => app.key !== "finder" && app.key !== "placeholder")
+    .map((app) => ({
+      key: app.key,
+      name: app.name,
+      icon: app.icon,
+      isOnDesktop: icons.some((icon) => icon.appKey === app.key),
+    }));
+
+  const handleDragStart = (e: React.DragEvent, appKey: string) => {
+    e.dataTransfer.setData("application/app-key", appKey);
+    e.dataTransfer.effectAllowed = "copy";
+  };
 
   return (
-    <div className={menuBarClasses}>
+    <div className="vercel-menu-bar fixed top-0 left-0 right-0 z-[1000]">
       {/* Left section - System menu */}
       <div className="flex-1 flex items-center" ref={systemMenuRef}>
         <button
-          className="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/10 transition-colors duration-150"
+          className="vercel-button px-2 py-1 font-bold"
           onClick={handleSystemMenuClick}
         >
-          <span className={`${getTextSizeClass()} font-bold ${isDarkMode ? 'text-white' : 'text-aqua-text'}`}>🖥️ miOS</span>
+          🖥️ miOS
         </button>
 
         {showSystemMenu && (
-          <div className={`absolute top-8 left-4 min-w-48 backdrop-blur-md border rounded-lg shadow-aqua-lg py-1 animate-scale-in ${
-            isDarkMode 
-              ? 'bg-gray-800/95 border-gray-600' 
-              : 'bg-white/95 border-aqua-border'
-          }`}>
+          <div className="absolute top-10 left-4 vercel-context-menu">
             <button
-              className={`w-full flex items-center gap-3 px-4 py-2 text-left ${getTextSizeClass()} ${
-                isDarkMode ? 'text-gray-200 hover:bg-gray-700/50' : 'text-aqua-text hover:bg-aqua-light/20'
-              } transition-colors duration-150`}
-              onClick={() => openApp('settings', 'About miOS')}
+              className="vercel-context-item"
+              onClick={() => openApp("settings", "About miOS")}
             >
-              <span>❓</span>
+              <span className="mr-3">❓</span>
               <span>About miOS</span>
             </button>
-            <div className="h-px bg-aqua-border/30 mx-2 my-1" />
+            <div className="h-px bg-vercel-light-border dark:bg-vercel-dark-border mx-2 my-1" />
             <button
-              className={`w-full flex items-center gap-3 px-4 py-2 text-left ${getTextSizeClass()} ${
-                isDarkMode ? 'text-gray-200 hover:bg-gray-700/50' : 'text-aqua-text hover:bg-aqua-light/20'
-              } transition-colors duration-150`}
-              onClick={() => openApp('settings', 'Settings')}
+              className="vercel-context-item"
+              onClick={() => openApp("settings", "Settings")}
             >
-              <span>⚙️</span>
+              <span className="mr-3">⚙️</span>
               <span>System Preferences</span>
             </button>
           </div>
@@ -130,34 +143,49 @@ export const MenuBar: React.FC = () => {
       {/* Center section - Launcher (always centered) */}
       <div className="flex-1 flex justify-center relative" ref={launcherRef}>
         <button
-          className="flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-white/10 transition-colors duration-150"
+          className="vercel-button px-3 py-1"
           onClick={handleLauncherClick}
         >
-          <span className={`${getTextSizeClass()} ${isDarkMode ? 'text-white' : 'text-aqua-text'}`}>🔍 Search</span>
+          🔍 Search
         </button>
 
         {showLauncher && (
-          <div 
-            className={`absolute top-8 w-80 backdrop-blur-md border rounded-lg shadow-aqua-lg p-4 animate-scale-in ${
-              isDarkMode 
-                ? 'bg-gray-800/95 border-gray-600' 
-                : 'bg-white/95 border-aqua-border'
-            }`}
-            style={{ left: '50%', transform: 'translateX(-50%)' }}
+          <div
+            className="absolute top-10 left-1/2 transform -translate-x-1/2 vercel-panel p-4 animate-slide-in-from-top"
+            style={{
+              width: "min(90vw, 480px)",
+              maxHeight: "calc(100vh - 120px)", // Account for menu bar and some padding
+            }}
           >
-            <div className="grid grid-cols-4 gap-3">
+            <div
+              className="grid grid-cols-3 sm:grid-cols-4 gap-3 overflow-y-auto vercel-scrollbar"
+              style={{ maxHeight: "calc(100vh - 160px)" }}
+            >
               {launcherApps.map((app) => (
                 <button
                   key={app.key}
-                  className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors duration-150 ${
-                    isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-aqua-light/20'
-                  }`}
+                  className="vercel-button flex flex-col items-center gap-2 p-3"
                   onClick={() => openApp(app.key, app.name)}
+                  draggable={true}
+                  onDragStart={(e) => handleDragStart(e, app.key)}
+                  title="Click to open or drag to desktop"
                 >
-                  <span className="text-2xl">{app.icon}</span>
-                  <span className={`${getTextSizeClass()} font-medium text-center ${
-                    isDarkMode ? 'text-gray-200' : 'text-aqua-text'
-                  }`}>{app.name}</span>
+                  <div className="text-3xl flex items-center justify-center w-12 h-12">
+                    {app.icon.includes(".") ? (
+                      <img
+                        src={
+                          new URL(`../assets/${app.icon}`, import.meta.url).href
+                        }
+                        alt={app.name}
+                        className="w-12 h-12 object-contain"
+                      />
+                    ) : (
+                      app.icon
+                    )}
+                  </div>
+                  <span className="text-xs font-medium text-center leading-tight">
+                    {app.name}
+                  </span>
                 </button>
               ))}
             </div>
@@ -169,17 +197,23 @@ export const MenuBar: React.FC = () => {
       <div className="flex-1 flex items-center justify-end gap-3">
         <ConnectionIndicator />
         <VolumeControl />
-        <div className="text-right">
-          <div className={`${getTextSizeClass()} font-medium leading-tight ${
-            isDarkMode ? 'text-white' : 'text-aqua-text'
-          }`}>
+        <div className="relative text-right font-mono" ref={clockRef}>
+          <button
+            className="text-sm font-medium leading-tight cursor-pointer vercel-button px-2 py-1"
+            onClick={handleClockClick}
+            title="Click to see date"
+          >
             {formatTime(currentTime)}
-          </div>
-          <div className={`text-xs leading-tight ${
-            isDarkMode ? 'text-gray-400' : 'text-aqua-secondary'
-          }`}>
-            {formatDate(currentTime)}
-          </div>
+          </button>
+
+          {/* Date appears on click beneath the clock */}
+          {showDate && (
+            <div className="absolute top-10 right-0 vercel-panel p-2 rounded shadow-lg whitespace-nowrap">
+              <div className="text-xs font-medium">
+                {formatDate(currentTime)}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

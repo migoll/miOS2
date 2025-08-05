@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useSystemStore } from '../stores/systemStore';
-import { useSound } from '../utils/hooks';
-import { useTextSize } from '../utils/textSize';
-import { HiVolumeUp, HiVolumeOff } from 'react-icons/hi';
+import React, { useState, useRef, useEffect } from "react";
+import { useSystemStore } from "../stores/systemStore";
+import { useSound } from "../utils/hooks";
+import { HiVolumeUp, HiVolumeOff } from "react-icons/hi";
 
 export const VolumeControl: React.FC = () => {
   const [showSlider, setShowSlider] = useState(false);
@@ -10,30 +9,38 @@ export const VolumeControl: React.FC = () => {
   const toggleMute = useSystemStore((state) => state.toggleMute);
   const setVolume = useSystemStore((state) => state.setVolume);
   const { playSound } = useSound();
-  const { getTextSizeClass } = useTextSize();
   const controlRef = useRef<HTMLDivElement>(null);
-  const isDarkMode = settings.theme === 'dark';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (controlRef.current && !controlRef.current.contains(event.target as Node)) {
+      if (
+        controlRef.current &&
+        !controlRef.current.contains(event.target as Node)
+      ) {
         setShowSlider(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
   const handleVolumeClick = () => {
+    console.log("Volume button clicked, showSlider:", showSlider);
+    console.log("Current settings:", settings);
+
     if (showSlider) {
+      // If slider is open, clicking the button toggles mute
+      console.log("Toggling mute, current state:", settings.isMuted);
       toggleMute();
-      playSound('click');
+      playSound("click");
     } else {
+      // If slider is closed, clicking opens the slider
+      console.log("Opening slider");
       setShowSlider(true);
-      playSound('menu_open');
+      playSound("menu_open");
     }
   };
 
@@ -44,8 +51,6 @@ export const VolumeControl: React.FC = () => {
 
   const getVolumeIcon = () => {
     if (settings.isMuted || settings.volume === 0) {
-      return <span className={getTextSizeClass()}>🔇</span>;
-    } else if (settings.volume < 0.5) {
       return <HiVolumeOff className="w-4 h-4" />;
     } else {
       return <HiVolumeUp className="w-4 h-4" />;
@@ -53,29 +58,25 @@ export const VolumeControl: React.FC = () => {
   };
 
   return (
-    <div ref={controlRef} className="relative flex items-center">
-      <div className="flex items-center">
-        {/* Volume Icon */}
-        <button
-          className={`p-1 rounded transition-all duration-300 ease-in-out ${
-            isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-white/10'
-          } ${showSlider ? 'mr-2' : ''}`}
-          onClick={handleVolumeClick}
-          title={settings.isMuted ? 'Unmute' : showSlider ? 'Mute' : 'Volume'}
-        >
-          {getVolumeIcon()}
-        </button>
+    <div ref={controlRef} className="relative">
+      {/* Volume Icon */}
+      <button
+        className="vercel-button p-1 text-xs transition-all duration-150 relative z-10"
+        onClick={handleVolumeClick}
+        title={
+          showSlider
+            ? settings.isMuted
+              ? "Unmute"
+              : "Mute"
+            : "Click to adjust volume"
+        }
+      >
+        {getVolumeIcon()}
+      </button>
 
-        {/* Volume Slider - slides in from the right */}
-        <div 
-          className={`flex items-center transition-all duration-300 ease-in-out ${
-            showSlider ? 'w-20 opacity-100' : 'w-0 opacity-0'
-          }`}
-          style={{ 
-            overflow: showSlider ? 'visible' : 'hidden',
-            height: '20px' // Ensure enough height for the knob
-          }}
-        >
+      {/* Volume Slider - appears beneath the icon on click */}
+      {showSlider && (
+        <div className="absolute top-10 left-1/2 transform -translate-x-1/2 vercel-panel p-3 rounded shadow-lg">
           <input
             type="range"
             min="0"
@@ -83,18 +84,26 @@ export const VolumeControl: React.FC = () => {
             step="0.01"
             value={settings.isMuted ? 0 : settings.volume}
             onChange={handleSliderChange}
-            className={`w-20 slider transition-opacity duration-300 ${
-              settings.isMuted ? 'opacity-50' : 'opacity-100'
-            }`}
+            onInput={handleSliderChange}
+            className="w-24"
             style={{
-              height: '4px',
-              background: settings.isMuted 
-                ? 'rgba(255, 255, 255, 0.3)' 
-                : `linear-gradient(to right, #007AFF 0%, #007AFF ${settings.volume * 100}%, rgba(255, 255, 255, 0.3) ${settings.volume * 100}%, rgba(255, 255, 255, 0.3) 100%)`
+              height: "4px",
+              background: settings.isMuted
+                ? "rgba(153, 153, 153, 0.3)"
+                : `linear-gradient(to right, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.8) ${
+                    settings.volume * 100
+                  }%, rgba(153, 153, 153, 0.3) ${
+                    settings.volume * 100
+                  }%, rgba(153, 153, 153, 0.3) 100%)`,
+              WebkitAppearance: "none",
+              appearance: "none",
+              outline: "none",
+              borderRadius: "2px",
+              cursor: "pointer",
             }}
           />
         </div>
-      </div>
+      )}
     </div>
   );
 };

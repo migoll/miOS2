@@ -1,10 +1,8 @@
 import { useCallback } from "react";
-import { soundManager } from "./soundManager";
 import type { SoundName } from "../types/index.js";
-import { useSystemStore } from "../stores/systemStore";
 
 export const useSound = () => {
-  const playSound = useCallback((soundName: SoundName) => {
+  const playSound = useCallback((_soundName: SoundName) => {
     // Temporarily disabled all sounds
     return;
   }, []);

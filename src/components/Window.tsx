@@ -1,8 +1,7 @@
 import React, { useCallback, useRef, useState } from "react";
 import { useWindowStore } from "../stores/windowStore";
-import { useSystemStore } from "../stores/systemStore";
+
 import { useSound } from "../utils/hooks";
-import { useTextSize } from "../utils/textSize";
 import type { WindowState } from "../types/index.js";
 import { getAppComponent } from "../apps/registry";
 
@@ -12,14 +11,6 @@ interface WindowProps {
 
 export const Window: React.FC<WindowProps> = ({ window }) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [isResizing, setIsResizing] = useState<string | null>(null);
-  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(
-    null
-  );
-
-  const settings = useSystemStore((state) => state.settings);
-  const { getTextSizeClass } = useTextSize();
-  const isDarkMode = settings.theme === "dark";
 
   const focusWindow = useWindowStore((state) => state.focusWindow);
   const closeWindow = useWindowStore((state) => state.closeWindow);
@@ -65,7 +56,7 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,
       };
-      setDragStart(startPos);
+
       setIsDragging(true);
 
       const handleMouseMove = (e: MouseEvent) => {
@@ -84,7 +75,7 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
 
       const handleMouseUp = () => {
         setIsDragging(false);
-        setDragStart(null);
+
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
         playSound("drop");
@@ -102,7 +93,6 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
       e.stopPropagation();
 
       handleFocus();
-      setIsResizing(direction);
 
       const startMouseX = e.clientX;
       const startMouseY = e.clientY;
@@ -140,7 +130,6 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
       };
 
       const handleMouseUp = () => {
-        setIsResizing(null);
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
       };
@@ -166,26 +155,12 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [window.isFocused, handleClose]);
 
-  const getCursorStyle = (direction: string) => {
-    const cursorMap: Record<string, string> = {
-      top: "n-resize",
-      bottom: "s-resize",
-      left: "w-resize",
-      right: "e-resize",
-      "top-left": "nw-resize",
-      "top-right": "ne-resize",
-      "bottom-left": "sw-resize",
-      "bottom-right": "se-resize",
-    };
-    return cursorMap[direction] || "default";
-  };
-
   return (
     <div
       ref={windowRef}
       className={`
-        absolute window-chrome transition-shadow duration-200
-        ${window.isFocused ? "shadow-aqua-lg" : "shadow-aqua"}
+        absolute vercel-window transition-shadow duration-200
+        ${window.isFocused ? "shadow-vercel-window" : "shadow-vercel-panel"}
         ${isDragging ? "cursor-move" : ""}
       `}
       style={{
@@ -199,33 +174,27 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
     >
       {/* Title bar */}
       <div
-        className="window-titlebar flex items-center justify-between px-4 py-2 h-8 cursor-move"
+        className="vercel-window-titlebar cursor-move"
         onMouseDown={handleTitleBarMouseDown}
       >
         {/* Traffic lights */}
         <div className="flex items-center gap-2">
           <button
-            className="traffic-light close"
+            className="vercel-traffic-light close"
             onClick={handleClose}
             onMouseDown={(e) => e.stopPropagation()}
           />
           <button
-            className="traffic-light minimize"
+            className="vercel-traffic-light minimize"
             onClick={handleMinimize}
             onMouseDown={(e) => e.stopPropagation()}
           />
-          <button className="traffic-light maximize" />
+          <button className="vercel-traffic-light maximize" />
         </div>
 
         {/* Window title */}
         <div className="flex-1 text-center">
-          <span
-            className={`${getTextSizeClass()} font-medium ${
-              isDarkMode ? "text-gray-200" : "text-aqua-text"
-            } select-none`}
-          >
-            {window.title}
-          </span>
+          <span className="select-none font-medium">{window.title}</span>
         </div>
 
         {/* Spacer for symmetry */}
@@ -234,16 +203,18 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
 
       {/* Window content */}
       <div
-        className="flex-1 overflow-hidden"
+        className="flex-1 overflow-hidden bg-vercel-light-panel dark:bg-vercel-dark-panel"
         style={{ height: window.size.height - 32 }}
       >
         {AppComponent ? (
           <AppComponent />
         ) : (
           <div className="flex items-center justify-center h-full">
-            <div className="text-center">
+            <div className="text-center font-mono">
               <div className="text-4xl mb-2">🖥️</div>
-              <div className="text-aqua-text">App not found</div>
+              <div className="text-vercel-light-text dark:text-vercel-dark-text">
+                App not found
+              </div>
             </div>
           </div>
         )}
@@ -254,37 +225,37 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
         <>
           {/* Edges */}
           <div
-            className="absolute top-0 left-2 right-2 h-1 hover:bg-aqua-blue/20 cursor-n-resize"
+            className="absolute top-0 left-3 right-3 h-1 hover:bg-white/20 dark:hover:bg-white/20 cursor-n-resize"
             onMouseDown={(e) => handleResizeMouseDown(e, "top")}
           />
           <div
-            className="absolute bottom-0 left-2 right-2 h-1 hover:bg-aqua-blue/20 cursor-s-resize"
+            className="absolute bottom-0 left-3 right-3 h-1 hover:bg-white/20 dark:hover:bg-white/20 cursor-s-resize"
             onMouseDown={(e) => handleResizeMouseDown(e, "bottom")}
           />
           <div
-            className="absolute left-0 top-2 bottom-2 w-1 hover:bg-aqua-blue/20 cursor-w-resize"
+            className="absolute left-0 top-3 bottom-3 w-1 hover:bg-white/20 dark:hover:bg-white/20 cursor-w-resize"
             onMouseDown={(e) => handleResizeMouseDown(e, "left")}
           />
           <div
-            className="absolute right-0 top-2 bottom-2 w-1 hover:bg-aqua-blue/20 cursor-e-resize"
+            className="absolute right-0 top-3 bottom-3 w-1 hover:bg-white/20 dark:hover:bg-white/20 cursor-e-resize"
             onMouseDown={(e) => handleResizeMouseDown(e, "right")}
           />
 
           {/* Corners */}
           <div
-            className="absolute top-0 left-0 w-2 h-2 hover:bg-aqua-blue/20 cursor-nw-resize"
+            className="absolute top-0 left-0 w-3 h-3 hover:bg-white/20 dark:hover:bg-white/20 cursor-nw-resize"
             onMouseDown={(e) => handleResizeMouseDown(e, "top-left")}
           />
           <div
-            className="absolute top-0 right-0 w-2 h-2 hover:bg-aqua-blue/20 cursor-ne-resize"
+            className="absolute top-0 right-0 w-3 h-3 hover:bg-white/20 dark:hover:bg-white/20 cursor-ne-resize"
             onMouseDown={(e) => handleResizeMouseDown(e, "top-right")}
           />
           <div
-            className="absolute bottom-0 left-0 w-2 h-2 hover:bg-aqua-blue/20 cursor-sw-resize"
+            className="absolute bottom-0 left-0 w-3 h-3 hover:bg-white/20 dark:hover:bg-white/20 cursor-sw-resize"
             onMouseDown={(e) => handleResizeMouseDown(e, "bottom-left")}
           />
           <div
-            className="absolute bottom-0 right-0 w-2 h-2 hover:bg-aqua-blue/20 cursor-se-resize"
+            className="absolute bottom-0 right-0 w-3 h-3 hover:bg-white/20 dark:hover:bg-white/20 cursor-se-resize"
             onMouseDown={(e) => handleResizeMouseDown(e, "bottom-right")}
           />
         </>

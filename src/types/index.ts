@@ -33,6 +33,9 @@ export interface DesktopIcon {
   name: string;
   icon: string;
   isSelected?: boolean;
+  isFolder?: boolean;
+  folderContents?: string[]; // Array of app keys contained in this folder
+  parentFolder?: string; // ID of parent folder if this icon is inside a folder
 }
 
 export interface SelectionRectangle {
@@ -48,8 +51,15 @@ export interface ContextMenu {
   targetId?: string;
 }
 
+export interface Wallpaper {
+  id: string;
+  name: string;
+  style: string;
+  category?: "gradient" | "basic";
+}
+
 export interface SystemSettings {
-  theme: "aqua" | "dark";
+  theme: "dark" | "light"; // Updated to support dark/light mode toggle
   wallpaper: string;
   volume: number;
   isMuted: boolean;

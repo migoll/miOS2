@@ -61,76 +61,74 @@ interface DesktopStore {
   ) => void;
 
   tidyUpIcons: () => void;
+  resetToDefaults: () => void;
+
+  // Desktop icon management
+  removeFromDesktop: (iconId: string) => void;
+  addToDesktop: (appKey: string, position: { x: number; y: number }) => void;
 }
 
 const defaultIcons: DesktopIcon[] = [
   {
-    id: "icon-finder",
-    appKey: "finder",
-    position: { x: 50, y: 120 },
-    name: "Finder",
-    icon: "📁",
-  },
-  {
     id: "icon-textedit",
     appKey: "textedit",
-    position: { x: 50, y: 200 },
+    position: { x: 20, y: 52 },
     name: "TextEdit",
     icon: "📝",
   },
   {
     id: "icon-macpaint",
     appKey: "macpaint",
-    position: { x: 50, y: 280 },
+    position: { x: 20, y: 137 },
     name: "MacPaint",
     icon: "🎨",
   },
   {
     id: "icon-videos",
     appKey: "videos",
-    position: { x: 150, y: 120 },
+    position: { x: 120, y: 52 },
     name: "Videos",
     icon: "📺",
   },
   {
     id: "icon-ipod",
     appKey: "ipod",
-    position: { x: 150, y: 200 },
+    position: { x: 120, y: 137 },
     name: "iPod",
     icon: "🎵",
   },
   {
     id: "icon-soundboard",
     appKey: "soundboard",
-    position: { x: 150, y: 280 },
+    position: { x: 20, y: 222 },
     name: "Soundboard",
     icon: "🔊",
   },
   {
     id: "icon-synth",
     appKey: "synth",
-    position: { x: 250, y: 120 },
+    position: { x: 220, y: 52 },
     name: "Synth",
     icon: "🎹",
   },
   {
     id: "icon-photobooth",
     appKey: "photobooth",
-    position: { x: 250, y: 200 },
+    position: { x: 220, y: 137 },
     name: "Photo Booth",
     icon: "📸",
   },
   {
     id: "icon-terminal",
     appKey: "terminal",
-    position: { x: 250, y: 280 },
+    position: { x: 120, y: 222 },
     name: "Terminal",
     icon: "⚡",
   },
   {
     id: "icon-minesweeper",
     appKey: "minesweeper",
-    position: { x: 350, y: 120 },
+    position: { x: 320, y: 52 },
     name: "Minesweeper",
     icon: "💣",
   },
@@ -180,13 +178,13 @@ const defaultIcons: DesktopIcon[] = [
   {
     id: "icon-crypto",
     appKey: "crypto",
-    position: { x: 550, y: 200 },
-    name: "Crypto Tracker",
+    position: { x: 520, y: 135 },
+    name: "Crypto",
     icon: "blockchain_10439415.png",
   },
 ];
 
-const CURRENT_VERSION = 7;
+const CURRENT_VERSION = 13;
 
 export const useDesktopStore = create<DesktopStore>()(
   persist(
@@ -409,10 +407,13 @@ export const useDesktopStore = create<DesktopStore>()(
 
       tidyUpIcons: () => {
         set((state) => {
-          const gridSize = 96; // 80px icon width + 16px spacing
-          const startX = 20;
-          const startY = 50; // Account for menu bar + some padding
-          const maxColumns = Math.floor((window.innerWidth - 40) / gridSize);
+          const iconSpacing = { x: 100, y: 85 }; // Windows-style grid spacing
+          const margin = 20; // Consistent margin from all edges
+          const startX = margin;
+          const startY = 32 + margin; // Menu bar (32px) + margin
+          const maxColumns = Math.floor(
+            (window.innerWidth - margin * 2) / iconSpacing.x
+          );
 
           const arrangedIcons = state.icons.map((icon, index) => {
             const row = Math.floor(index / maxColumns);
@@ -421,13 +422,49 @@ export const useDesktopStore = create<DesktopStore>()(
             return {
               ...icon,
               position: {
-                x: startX + col * gridSize,
-                y: startY + row * gridSize,
+                x: startX + col * iconSpacing.x,
+                y: startY + row * iconSpacing.y,
               },
             };
           });
 
           return { icons: arrangedIcons };
+        });
+      },
+
+      // Debug function to reset icons
+      resetToDefaults: () => {
+        set({
+          icons: defaultIcons,
+          version: CURRENT_VERSION,
+        });
+      },
+
+      // Desktop icon management functions
+      removeFromDesktop: (iconId) => {
+        set((state) => ({
+          icons: state.icons.filter((icon) => icon.id !== iconId),
+          selectedIconIds: state.selectedIconIds.filter((id) => id !== iconId),
+        }));
+      },
+
+      addToDesktop: (appKey, position) => {
+        // Import app registry to get app info
+        import("../apps/registry").then(({ appRegistry }) => {
+          const appInfo = appRegistry[appKey];
+          if (!appInfo) return;
+
+          const newIcon: DesktopIcon = {
+            id: `icon-${appKey}-${Date.now()}`,
+            appKey,
+            position,
+            name: appInfo.name,
+            icon: appInfo.icon,
+          };
+
+          set((state) => ({
+            icons: [...state.icons, newIcon],
+          }));
         });
       },
     }),

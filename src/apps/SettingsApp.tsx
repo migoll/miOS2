@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useSystemStore, wallpapers } from '../stores/systemStore';
-import { useSound } from '../utils/hooks';
+import React, { useState } from "react";
+import { useSystemStore, wallpapers } from "../stores/systemStore";
+import { useSound } from "../utils/hooks";
 
 const SettingsApp: React.FC = () => {
   const settings = useSystemStore((state) => state.settings);
@@ -8,18 +8,21 @@ const SettingsApp: React.FC = () => {
   const toggleMute = useSystemStore((state) => state.toggleMute);
   const setVolume = useSystemStore((state) => state.setVolume);
   const { playSound } = useSound();
-  
-  const [activeTab, setActiveTab] = useState('general');
+
+  const [activeTab, setActiveTab] = useState("general");
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
-    playSound('click');
+    playSound("click");
   };
 
-  const handleThemeChange = (theme: 'aqua' | 'dark') => {
-    updateSettings({ theme });
-    playSound('click');
+  const handleThemeChange = (theme: "dark" | "light") => {
+    // Only update theme, keep current wallpaper
+    updateSettings({
+      theme,
+    });
+    playSound("click");
   };
 
   const handleToggleAnimations = () => {
@@ -29,7 +32,7 @@ const SettingsApp: React.FC = () => {
         animationsEnabled: !settings.uiPreferences.animationsEnabled,
       },
     });
-    playSound('click');
+    playSound("click");
   };
 
   const handleToggleSounds = () => {
@@ -39,251 +42,305 @@ const SettingsApp: React.FC = () => {
         soundsEnabled: !settings.uiPreferences.soundsEnabled,
       },
     });
-    playSound('click');
+    playSound("click");
   };
 
   const handleWallpaperChange = (wallpaperId: string) => {
     updateSettings({ wallpaper: wallpaperId });
-    playSound('click');
-  };
-
-  const handleTextSizeChange = (size: 'small' | 'medium' | 'large' | 'giga') => {
-    updateSettings({
-      uiPreferences: {
-        ...settings.uiPreferences,
-        textSize: size,
-      },
-    });
-    playSound('click');
+    playSound("click");
   };
 
   const tabs = [
-    { id: 'general', name: 'General', icon: '⚙️' },
-    { id: 'appearance', name: 'Appearance', icon: '🎨' },
-    { id: 'sound', name: 'Sound', icon: '🔊' },
-    { id: 'about', name: 'About', icon: '❓' },
+    { id: "general", name: "General", icon: "⚙️" },
+    { id: "appearance", name: "Appearance", icon: "🎨" },
+    { id: "sound", name: "Sound", icon: "🔊" },
+    { id: "about", name: "About", icon: "❓" },
   ];
 
   return (
-    <div className="flex h-full bg-aqua-background">
+    <div className="flex h-full bg-vercel-light-panel dark:bg-vercel-dark-panel font-mono">
       {/* Sidebar */}
-      <div className="w-48 bg-white/50 border-r border-aqua-border p-4">
+      <div className="w-48 bg-vercel-light-panel dark:bg-vercel-dark-panel border-r border-vercel-light-border dark:border-vercel-dark-border p-4">
         <div className="space-y-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               className={`
-                w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors duration-150
-                ${activeTab === tab.id 
-                  ? 'bg-aqua-blue text-white' 
-                  : 'text-aqua-text hover:bg-white/30'
-                }
-              `}
+                 w-full flex items-center gap-3 px-3 py-2 rounded text-left transition-colors duration-150 font-mono text-sm
+                 ${
+                   activeTab === tab.id
+                     ? "bg-gray-200 dark:bg-white/10 text-vercel-light-text dark:text-white"
+                     : "text-vercel-light-text dark:text-vercel-dark-text hover:bg-gray-100 dark:hover:bg-white/5"
+                 }
+               `}
               onClick={() => {
                 setActiveTab(tab.id);
-                playSound('click');
+                playSound("click");
               }}
             >
               <span>{tab.icon}</span>
-              <span className="text-sm font-medium">{tab.name}</span>
+              <span className="font-medium">{tab.name}</span>
             </button>
           ))}
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 p-6 overflow-y-auto">
-        {activeTab === 'general' && (
+      <div className="flex-1 p-6 overflow-y-auto vercel-scrollbar max-w-container mx-auto">
+        {activeTab === "general" && (
           <div className="space-y-6">
-            <h2 className="text-xl font-bold text-aqua-text mb-4">General Settings</h2>
-            
-            <div className="bg-white/30 rounded-xl p-4">
-              <h3 className="font-semibold text-aqua-text mb-3">User Interface</h3>
-              
+            <h2 className="text-xl font-bold text-vercel-light-text dark:text-vercel-dark-text mb-4">
+              General Settings
+            </h2>
+
+            <div className="vercel-panel p-4">
+              <h3 className="font-semibold text-vercel-light-text dark:text-vercel-dark-text mb-3">
+                User Interface
+              </h3>
+
               <div className="space-y-3">
                 <label className="flex items-center gap-3">
                   <input
                     type="checkbox"
                     checked={settings.uiPreferences.animationsEnabled}
                     onChange={handleToggleAnimations}
-                    className="rounded"
+                    className="vercel-input"
                   />
-                  <span className="text-sm text-aqua-text">Enable animations</span>
+                  <span className="text-sm text-vercel-light-text dark:text-vercel-dark-text">
+                    Enable animations
+                  </span>
                 </label>
-                
+
                 <label className="flex items-center gap-3">
                   <input
                     type="checkbox"
                     checked={settings.uiPreferences.soundsEnabled}
                     onChange={handleToggleSounds}
-                    className="rounded"
+                    className="vercel-input"
                   />
-                  <span className="text-sm text-aqua-text">Enable sound effects</span>
+                  <span className="text-sm text-vercel-light-text dark:text-vercel-dark-text">
+                    Enable sound effects
+                  </span>
                 </label>
               </div>
             </div>
-
-            <div className="bg-white/30 rounded-xl p-4">
-              <h3 className="font-semibold text-aqua-text mb-3">Text Size</h3>
-              
-              <div className="grid grid-cols-4 gap-2">
-                {[
-                  { id: 'small', name: 'Small', size: '12px' },
-                  { id: 'medium', name: 'Medium', size: '14px' },
-                  { id: 'large', name: 'Large', size: '16px' },
-                  { id: 'giga', name: 'Giga', size: '20px' },
-                ].map((option) => (
-                  <button
-                    key={option.id}
-                    className={`
-                      p-2 rounded-lg border-2 transition-all duration-150
-                      ${settings.uiPreferences.textSize === option.id
-                        ? 'border-aqua-blue bg-aqua-blue/10' 
-                        : 'border-aqua-border hover:border-aqua-blue/50'
-                      }
-                    `}
-                    onClick={() => handleTextSizeChange(option.id as any)}
-                  >
-                    <div className="text-xs font-medium text-aqua-text">{option.name}</div>
-                    <div className="text-xs text-aqua-secondary">{option.size}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         )}
 
-        {activeTab === 'appearance' && (
+        {activeTab === "appearance" && (
           <div className="space-y-6">
-            <h2 className="text-xl font-bold text-aqua-text mb-4">Appearance</h2>
-            
-            {/* Wallpaper Selection */}
-            <div className="bg-white/30 rounded-xl p-4">
-              <h3 className="font-semibold text-aqua-text mb-3">Wallpaper</h3>
-              
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                {wallpapers.map((wallpaper) => (
-                  <button
-                    key={wallpaper.id}
-                    className={`
-                      relative h-20 rounded-lg border-2 transition-all duration-150 overflow-hidden
-                      ${settings.wallpaper === wallpaper.id 
-                        ? 'border-aqua-blue ring-2 ring-aqua-blue/30' 
-                        : 'border-aqua-border hover:border-aqua-blue/50'
-                      }
-                    `}
-                    style={{ background: wallpaper.style }}
-                    onClick={() => handleWallpaperChange(wallpaper.id)}
-                  >
-                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                      <span className="text-white text-xs font-medium text-center px-2">
-                        {wallpaper.name}
-                      </span>
-                    </div>
-                    {settings.wallpaper === wallpaper.id && (
-                      <div className="absolute top-1 right-1 w-3 h-3 bg-aqua-blue rounded-full flex items-center justify-center">
-                        <span className="text-white text-xs">✓</span>
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            <div className="bg-white/30 rounded-xl p-4">
-              <h3 className="font-semibold text-aqua-text mb-3">Theme</h3>
-              
+            <h2 className="text-xl font-bold text-vercel-light-text dark:text-vercel-dark-text mb-4">
+              Appearance
+            </h2>
+
+            {/* Theme Selection - Priority */}
+            <div className="vercel-panel p-4">
+              <h3 className="font-semibold text-vercel-light-text dark:text-vercel-dark-text mb-3">
+                Theme
+              </h3>
+
               <div className="grid grid-cols-2 gap-3">
                 <button
                   className={`
-                    p-4 rounded-lg border-2 transition-all duration-150
-                    ${settings.theme === 'aqua' 
-                      ? 'border-aqua-blue bg-aqua-blue/10' 
-                      : 'border-aqua-border hover:border-aqua-blue/50'
-                    }
-                  `}
-                  onClick={() => handleThemeChange('aqua')}
+                     vercel-button p-4 transition-all duration-150
+                     ${
+                       settings.theme === "dark"
+                         ? "bg-white/10 border border-white/20 shadow-inner"
+                         : ""
+                     }
+                   `}
+                  onClick={() => handleThemeChange("dark")}
                 >
-                  <div className="w-full h-16 bg-gradient-to-br from-blue-200 to-blue-300 rounded mb-2"></div>
-                  <span className="text-sm font-medium text-aqua-text">Aqua Classic</span>
+                  <div className="w-full h-16 bg-gradient-to-br from-gray-800 to-gray-900 rounded mb-2"></div>
+                  <span className="text-sm font-medium">Dark Mode</span>
                 </button>
-                
+
                 <button
                   className={`
-                    p-4 rounded-lg border-2 transition-all duration-150
-                    ${settings.theme === 'dark' 
-                      ? 'border-aqua-blue bg-aqua-blue/10' 
-                      : 'border-aqua-border hover:border-aqua-blue/50'
-                    }
-                  `}
-                  onClick={() => handleThemeChange('dark')}
+                     vercel-button p-4 transition-all duration-150
+                     ${
+                       settings.theme === "light"
+                         ? "bg-white/10 border border-white/20 shadow-inner"
+                         : ""
+                     }
+                   `}
+                  onClick={() => handleThemeChange("light")}
                 >
-                  <div className="w-full h-16 bg-gradient-to-br from-gray-700 to-gray-900 rounded mb-2"></div>
-                  <span className="text-sm font-medium text-aqua-text">Dark Mode</span>
+                  <div className="w-full h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded mb-2"></div>
+                  <span className="text-sm font-medium">Light Mode</span>
                 </button>
               </div>
             </div>
 
+            {/* Wallpaper Selection */}
+            <div className="vercel-panel p-4">
+              <h3 className="font-semibold text-vercel-light-text dark:text-vercel-dark-text mb-3">
+                Background
+              </h3>
 
+              {/* Gradient Backgrounds Section */}
+              <div className="mb-6">
+                <h4 className="text-sm font-medium text-vercel-light-text dark:text-vercel-dark-text mb-3 opacity-75">
+                  Gradient Backgrounds
+                </h4>
+                <div className="grid grid-cols-2 gap-3">
+                  {wallpapers
+                    .filter((wallpaper) => wallpaper.category === "gradient")
+                    .map((wallpaper) => (
+                      <button
+                        key={wallpaper.id}
+                        className={`
+                           relative h-36 rounded border-2 transition-all duration-150 overflow-hidden
+                           ${
+                             settings.wallpaper === wallpaper.id
+                               ? "bg-white/10 border border-white/20 shadow-inner"
+                               : "border-gray-300 dark:border-gray-600 hover:border-white/50 dark:hover:border-white/50"
+                           }
+                         `}
+                        style={{ background: wallpaper.style }}
+                        onClick={() => handleWallpaperChange(wallpaper.id)}
+                      >
+                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                          <span className="text-white text-xs font-medium text-center px-2 font-mono">
+                            {wallpaper.name}
+                          </span>
+                        </div>
+                        {settings.wallpaper === wallpaper.id && (
+                          <div className="absolute top-1 right-1 w-3 h-3 bg-white/20 border border-white/40 rounded-full flex items-center justify-center">
+                            <span className="text-white text-xs">✓</span>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                </div>
+              </div>
+
+              {/* Basic Backgrounds Section */}
+              <div>
+                <h4 className="text-sm font-medium text-vercel-light-text dark:text-vercel-dark-text mb-3 opacity-75">
+                  Basic Backgrounds
+                </h4>
+                <div className="grid grid-cols-2 gap-3">
+                  {wallpapers
+                    .filter((wallpaper) => wallpaper.category === "basic")
+                    .map((wallpaper) => (
+                      <button
+                        key={wallpaper.id}
+                        className={`
+                           relative h-36 rounded border-2 transition-all duration-150 overflow-hidden
+                           ${
+                             settings.wallpaper === wallpaper.id
+                               ? "bg-white/10 border border-white/20 shadow-inner"
+                               : "border-gray-300 dark:border-gray-600 hover:border-white/50 dark:hover:border-white/50"
+                           }
+                         `}
+                        style={{ background: wallpaper.style }}
+                        onClick={() => handleWallpaperChange(wallpaper.id)}
+                      >
+                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                          <span className="text-white text-xs font-medium text-center px-2 font-mono">
+                            {wallpaper.name}
+                          </span>
+                        </div>
+                        {settings.wallpaper === wallpaper.id && (
+                          <div className="absolute top-1 right-1 w-3 h-3 bg-white/20 border border-white/40 rounded-full flex items-center justify-center">
+                            <span className="text-white text-xs">✓</span>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
-        {activeTab === 'sound' && (
+        {activeTab === "sound" && (
           <div className="space-y-6">
-            <h2 className="text-xl font-bold text-aqua-text mb-4">Sound Settings</h2>
-            
-            <div className="bg-white/30 rounded-xl p-4">
-              <h3 className="font-semibold text-aqua-text mb-3">Volume</h3>
-              
+            <h2 className="text-xl font-bold text-vercel-light-text dark:text-vercel-dark-text mb-4">
+              Sound Settings
+            </h2>
+
+            <div className="vercel-panel p-4">
+              <h3 className="font-semibold text-vercel-light-text dark:text-vercel-dark-text mb-3">
+                Volume
+              </h3>
+
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <span className="text-sm text-aqua-text w-16">Master:</span>
+                  <span className="text-sm text-vercel-light-text dark:text-vercel-dark-text w-16 font-mono">
+                    Master:
+                  </span>
                   <input
                     type="range"
                     min="0"
                     max="1"
-                    step="0.1"
+                    step="0.01"
                     value={settings.volume}
                     onChange={handleVolumeChange}
                     className="flex-1"
+                    style={{
+                      height: "4px",
+                      background: settings.isMuted
+                        ? "rgba(153, 153, 153, 0.3)"
+                        : `linear-gradient(to right, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.8) ${
+                            settings.volume * 100
+                          }%, rgba(153, 153, 153, 0.3) ${
+                            settings.volume * 100
+                          }%, rgba(153, 153, 153, 0.3) 100%)`,
+                      WebkitAppearance: "none",
+                      appearance: "none",
+                      outline: "none",
+                      borderRadius: "2px",
+                      cursor: "pointer",
+                    }}
                   />
-                  <span className="text-sm text-aqua-text w-12">
+                  <span className="text-sm text-vercel-light-text dark:text-vercel-dark-text w-12 font-mono">
                     {Math.round(settings.volume * 100)}%
                   </span>
                 </div>
-                
+
                 <label className="flex items-center gap-3">
                   <input
                     type="checkbox"
                     checked={settings.isMuted}
                     onChange={toggleMute}
-                    className="rounded"
+                    className="vercel-input"
                   />
-                  <span className="text-sm text-aqua-text">Mute all sounds</span>
+                  <span className="text-sm text-vercel-light-text dark:text-vercel-dark-text">
+                    Mute all sounds
+                  </span>
                 </label>
               </div>
             </div>
           </div>
         )}
 
-        {activeTab === 'about' && (
+        {activeTab === "about" && (
           <div className="space-y-6">
-            <h2 className="text-xl font-bold text-aqua-text mb-4">About miOS</h2>
-            
-            <div className="bg-white/30 rounded-xl p-6 text-center">
+            <h2 className="text-xl font-bold text-vercel-light-text dark:text-vercel-dark-text mb-4">
+              About miOS
+            </h2>
+
+            <div className="vercel-panel p-6 text-center">
               <div className="text-6xl mb-4">🖥️</div>
-              <h3 className="text-2xl font-bold text-aqua-text mb-2">miOS</h3>
-              <p className="text-aqua-secondary mb-4">Version 1.0.0</p>
-              <p className="text-sm text-aqua-text leading-relaxed max-w-md mx-auto">
-                A fully working browser-native personal operating system with a 
-                polished, retro-futuristic macOS Aqua-inspired desktop environment.
+              <h3 className="text-2xl font-bold text-vercel-light-text dark:text-vercel-dark-text mb-2 font-mono">
+                miOS
+              </h3>
+              <p className="text-vercel-light-text-secondary dark:text-vercel-dark-text-secondary mb-4 font-mono">
+                Version 2.0.0 - Vercel Edition
               </p>
-              
-              <div className="mt-6 pt-4 border-t border-aqua-border/30">
-                <p className="text-xs text-aqua-secondary">
-                  Built with React, TypeScript, and Tailwind CSS
+              <p className="text-sm text-vercel-light-text dark:text-vercel-dark-text leading-relaxed max-w-md mx-auto">
+                A minimal, engineer-first browser operating system built with
+                Vercel's design principles. Ultra-clean, monospace typography,
+                and perfectly spaced.
+              </p>
+
+              <div className="mt-6 pt-4 border-t border-vercel-light-border dark:border-vercel-dark-border">
+                <p className="text-xs text-vercel-light-text-secondary dark:text-vercel-dark-text-secondary font-mono">
+                  Built with React, TypeScript, Tailwind CSS, and Geist Mono
                 </p>
-                <p className="text-xs text-aqua-secondary mt-1">
+                <p className="text-xs text-vercel-light-text-secondary dark:text-vercel-dark-text-secondary mt-1 font-mono">
                   Current time: {settings.time.toLocaleString()}
                 </p>
               </div>

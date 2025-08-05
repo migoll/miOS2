@@ -34,7 +34,7 @@ export const appRegistry: Record<string, AppMetadata> = {
     key: "settings",
     name: "Settings",
     icon: "⚙️",
-    defaultSize: { width: 600, height: 500 },
+    defaultSize: { width: 800, height: 600 },
     component: SettingsApp,
     category: "system",
   },
@@ -160,7 +160,7 @@ export const appRegistry: Record<string, AppMetadata> = {
   },
   crypto: {
     key: "crypto",
-    name: "Crypto Tracker",
+    name: "Crypto",
     icon: "blockchain_10439415.png",
     defaultSize: { width: 1000, height: 700 },
     component: CryptoApp,
@@ -168,9 +168,7 @@ export const appRegistry: Record<string, AppMetadata> = {
   },
 };
 
-export const getAppComponent = (
-  appKey: string
-): React.ComponentType<any> | null => {
+export const getAppComponent = (appKey: string): React.ComponentType | null => {
   const app = appRegistry[appKey];
   return app ? app.component : null;
 };
