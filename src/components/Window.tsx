@@ -225,37 +225,45 @@ export const Window: React.FC<WindowProps> = ({ window }) => {
         <>
           {/* Edges */}
           <div
-            className="absolute top-0 left-3 right-3 h-1 hover:bg-white/20 dark:hover:bg-white/20 cursor-n-resize"
+            className="absolute top-0 left-3 right-3 h-1 hover:bg-white/20 dark:hover:bg-white/20 resize-handle"
+            data-direction="n"
             onMouseDown={(e) => handleResizeMouseDown(e, "top")}
           />
           <div
-            className="absolute bottom-0 left-3 right-3 h-1 hover:bg-white/20 dark:hover:bg-white/20 cursor-s-resize"
+            className="absolute bottom-0 left-3 right-3 h-1 hover:bg-white/20 dark:hover:bg-white/20 resize-handle"
+            data-direction="s"
             onMouseDown={(e) => handleResizeMouseDown(e, "bottom")}
           />
           <div
-            className="absolute left-0 top-3 bottom-3 w-1 hover:bg-white/20 dark:hover:bg-white/20 cursor-w-resize"
+            className="absolute left-0 top-3 bottom-3 w-1 hover:bg-white/20 dark:hover:bg-white/20 resize-handle"
+            data-direction="w"
             onMouseDown={(e) => handleResizeMouseDown(e, "left")}
           />
           <div
-            className="absolute right-0 top-3 bottom-3 w-1 hover:bg-white/20 dark:hover:bg-white/20 cursor-e-resize"
+            className="absolute right-0 top-3 bottom-3 w-1 hover:bg-white/20 dark:hover:bg-white/20 resize-handle"
+            data-direction="e"
             onMouseDown={(e) => handleResizeMouseDown(e, "right")}
           />
 
           {/* Corners */}
           <div
-            className="absolute top-0 left-0 w-3 h-3 hover:bg-white/20 dark:hover:bg-white/20 cursor-nw-resize"
+            className="absolute top-0 left-0 w-3 h-3 hover:bg-white/20 dark:hover:bg-white/20 resize-handle"
+            data-direction="nw"
             onMouseDown={(e) => handleResizeMouseDown(e, "top-left")}
           />
           <div
-            className="absolute top-0 right-0 w-3 h-3 hover:bg-white/20 dark:hover:bg-white/20 cursor-ne-resize"
+            className="absolute top-0 right-0 w-3 h-3 hover:bg-white/20 dark:hover:bg-white/20 resize-handle"
+            data-direction="ne"
             onMouseDown={(e) => handleResizeMouseDown(e, "top-right")}
           />
           <div
-            className="absolute bottom-0 left-0 w-3 h-3 hover:bg-white/20 dark:hover:bg-white/20 cursor-sw-resize"
+            className="absolute bottom-0 left-0 w-3 h-3 hover:bg-white/20 dark:hover:bg-white/20 resize-handle"
+            data-direction="sw"
             onMouseDown={(e) => handleResizeMouseDown(e, "bottom-left")}
           />
           <div
-            className="absolute bottom-0 right-0 w-3 h-3 hover:bg-white/20 dark:hover:bg-white/20 cursor-se-resize"
+            className="absolute bottom-0 right-0 w-3 h-3 hover:bg-white/20 dark:hover:bg-white/20 resize-handle"
+            data-direction="se"
             onMouseDown={(e) => handleResizeMouseDown(e, "bottom-right")}
           />
         </>
