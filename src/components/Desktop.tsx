@@ -184,9 +184,6 @@ export const Desktop: React.FC = () => {
         onContextMenu={handleRightClick}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
-        style={{
-          cursor: selectionRectangle.isActive ? "crosshair" : "default",
-        }}
       >
         {/* Desktop icons - only show icons not inside folders */}
         {icons

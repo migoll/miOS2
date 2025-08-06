@@ -5,15 +5,7 @@
 @tailwind utilities;
 
 /* macOS Cursor System - Global cursor styles */
-* {
-  cursor: inherit;
-}
-
-/* Ensure cursor inheritance works properly */
-html,
-body {
-  cursor: default;
-}
+/* Removed conflicting cursor rules to allow custom cursor system to work */
 
 :root {
   font-family: "Geist Mono", ui-monospace, monospace;

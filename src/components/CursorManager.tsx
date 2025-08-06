@@ -11,7 +11,7 @@ export const CursorManager: React.FC = () => {
     });
 
     // Set default cursor for the entire document
-    document.body.style.cursor = `url(${cursors.default}) 32 32, auto`;
+    document.body.style.cursor = `url(${cursors.default}) 24 24, auto`;
 
     // Function to set cursor for an element
     const setCursor = (
@@ -19,7 +19,7 @@ export const CursorManager: React.FC = () => {
       cursorType: keyof typeof cursors
     ) => {
       try {
-        element.style.cursor = `url(${cursors[cursorType]}) 32 32, auto`;
+        element.style.cursor = `url(${cursors[cursorType]}) 24 24, auto`;
         console.log(`CursorManager: Set ${cursorType} cursor on`, element);
       } catch (error) {
         console.error(
@@ -32,6 +32,15 @@ export const CursorManager: React.FC = () => {
     // Apply cursors to different element types
     const applyCursors = () => {
       console.log("CursorManager: Applying cursors...");
+
+      // Desktop surface - should use default cursor, not crosshair
+      const desktopSurface = document.querySelector(".desktop-surface");
+      if (desktopSurface) {
+        console.log(
+          "CursorManager: Found desktop surface, setting default cursor"
+        );
+        setCursor(desktopSurface as HTMLElement, "default");
+      }
 
       // Text inputs and textareas
       const textElements = document.querySelectorAll(
